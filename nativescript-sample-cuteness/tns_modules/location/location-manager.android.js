@@ -29,12 +29,15 @@ var LocationManager = (function () {
         var androidLocation = new android.location.Location('custom');
         androidLocation.setLatitude(location.latitude);
         androidLocation.setLongitude(location.longitude);
-        if (location.altitude)
+        if (location.altitude) {
             androidLocation.setAltitude(location.altitude);
-        if (location.speed)
+        }
+        if (location.speed) {
             androidLocation.setSpeed(float(location.speed));
-        if (location.direction)
+        }
+        if (location.direction) {
             androidLocation.setBearing(float(location.direction));
+        }
         if (location.timestamp) {
             try  {
                 androidLocation.setTime(long(location.timestamp.getTime()));
@@ -88,12 +91,15 @@ var LocationManager = (function () {
             });
 
             if (options) {
-                if (options.desiredAccuracy)
+                if (options.desiredAccuracy) {
                     this.desiredAccuracy = options.desiredAccuracy;
-                if (options.updateDistance)
+                }
+                if (options.updateDistance) {
                     this.updateDistance = options.updateDistance;
-                if (options.minimumUpdateTime)
+                }
+                if (options.minimumUpdateTime) {
                     this.minimumUpdateTime = options.minimumUpdateTime;
+                }
             }
 
             this.locationListener._onLocation = onLocation;
@@ -146,4 +152,3 @@ var LocationManager = (function () {
     return LocationManager;
 })();
 exports.LocationManager = LocationManager;
-//# sourceMappingURL=location-manager.android.js.map

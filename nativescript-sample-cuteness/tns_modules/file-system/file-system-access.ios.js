@@ -1,5 +1,5 @@
-﻿var utilsModule = require("utils/utils_ios");
-var textModule = require("text/text");
+﻿var utilsModule = require("utils/utils");
+var textModule = require("text");
 
 var FileSystemAccess = (function () {
     function FileSystemAccess() {
@@ -12,7 +12,7 @@ var FileSystemAccess = (function () {
         this.NSUTF8StringEncoding = 4;
     }
     FileSystemAccess.prototype.getLastModified = function (path) {
-        var fileManager = Foundation.NSFileManager.defaultManager();
+        var fileManager = NSFileManager.defaultManager();
         var attributes = fileManager.attributesOfItemAtPathError(path, null);
 
         if (attributes) {
@@ -27,10 +27,10 @@ var FileSystemAccess = (function () {
 
     FileSystemAccess.prototype.getParent = function (path, onError) {
         try  {
-            var fileManager = Foundation.NSFileManager.defaultManager();
-            var nsString = Foundation.NSString.initWithString(path);
+            var fileManager = NSFileManager.defaultManager();
+            var nsString = NSString.alloc().initWithString(path);
 
-            var parentPath = nsString.stringByDeletingLastPathComponent();
+            var parentPath = nsString.stringByDeletingLastPathComponent;
             var name = fileManager.displayNameAtPath(parentPath);
 
             return {
@@ -48,7 +48,7 @@ var FileSystemAccess = (function () {
 
     FileSystemAccess.prototype.getFile = function (path, onError) {
         try  {
-            var fileManager = Foundation.NSFileManager.defaultManager();
+            var fileManager = NSFileManager.defaultManager();
             var exists = fileManager.fileExistsAtPath(path);
 
             if (!exists) {
@@ -79,7 +79,7 @@ var FileSystemAccess = (function () {
 
     FileSystemAccess.prototype.getFolder = function (path, onError) {
         try  {
-            var fileManager = Foundation.NSFileManager.defaultManager();
+            var fileManager = NSFileManager.defaultManager();
             var exists = this.folderExists(path);
 
             if (!exists) {
@@ -143,26 +143,22 @@ var FileSystemAccess = (function () {
     };
 
     FileSystemAccess.prototype.fileExists = function (path) {
-        var fileManager = Foundation.NSFileManager.defaultManager();
+        var fileManager = NSFileManager.defaultManager();
         return fileManager.fileExistsAtPath(path);
     };
 
     FileSystemAccess.prototype.folderExists = function (path) {
-        var fileManager = Foundation.NSFileManager.defaultManager();
+        var fileManager = NSFileManager.defaultManager();
 
-        var buffer = NativePointer.create(PrimitiveType.BOOL, 1);
-        var exists = fileManager.fileExistsAtPathIsDirectory(path, buffer);
+        var outVal = new RefValue();
+        var exists = fileManager.fileExistsAtPathIsDirectory(path, outVal);
 
-        var isDir = buffer[0] && buffer[0] > 0;
-
-        buffer.delete();
-
-        return exists && isDir;
+        return exists && outVal.value > 0;
     };
 
     FileSystemAccess.prototype.concatPath = function (left, right) {
-        var nsArray = utilsModule.Collections.jsArrayToNSArray([left, right]);
-        var nsString = Foundation.NSString.pathWithComponents(nsArray);
+        var nsArray = utilsModule.ios.collections.jsArrayToNSArray([left, right]);
+        var nsString = NSString.pathWithComponents(nsArray);
 
         return nsString.toString();
     };
@@ -176,7 +172,7 @@ var FileSystemAccess = (function () {
     };
 
     FileSystemAccess.prototype.emptyFolder = function (path, onSuccess, onError) {
-        var fileManager = Foundation.NSFileManager.defaultManager();
+        var fileManager = NSFileManager.defaultManager();
 
         var filesEnum = function (files) {
             var i;
@@ -199,7 +195,7 @@ var FileSystemAccess = (function () {
     };
 
     FileSystemAccess.prototype.rename = function (path, newPath, onSuccess, onError) {
-        var fileManager = Foundation.NSFileManager.defaultManager();
+        var fileManager = NSFileManager.defaultManager();
         if (!fileManager.moveItemAtPathToPathError(path, newPath, null)) {
             if (onError) {
                 onError(new Error("Failed to rename '" + path + "' to '" + newPath + "'"));
@@ -217,13 +213,17 @@ var FileSystemAccess = (function () {
         return this.getKnownPath(this.cachesDir);
     };
 
+    FileSystemAccess.prototype.getCurrentAppFolderPath = function () {
+        return NSBundle.mainBundle().resourcePath;
+    };
+
     FileSystemAccess.prototype.readText = function (path, onSuccess, onError, encoding) {
         var actualEncoding = encoding;
         if (!actualEncoding) {
             actualEncoding = textModule.encoding.UTF_8;
         }
 
-        var nsString = Foundation.NSString.stringWithContentsOfFileEncodingError(path, actualEncoding, null);
+        var nsString = NSString.stringWithContentsOfFileEncodingError(path, actualEncoding, null);
         if (!nsString) {
             if (onError) {
                 onError(new Error("Failed to read file at path '" + path + "'"));
@@ -234,7 +234,7 @@ var FileSystemAccess = (function () {
     };
 
     FileSystemAccess.prototype.writeText = function (path, content, onSuccess, onError, encoding) {
-        var nsString = Foundation.NSString.initWithString(content);
+        var nsString = NSString.alloc().initWithString(content);
 
         var actualEncoding = encoding;
         if (!actualEncoding) {
@@ -251,11 +251,11 @@ var FileSystemAccess = (function () {
     };
 
     FileSystemAccess.prototype.getKnownPath = function (folderType) {
-        var fileManager = Foundation.NSFileManager.defaultManager();
+        var fileManager = NSFileManager.defaultManager();
         var paths = fileManager.URLsForDirectoryInDomains(folderType, this.userDomain);
 
         var url = paths.objectAtIndex(0);
-        return url.path();
+        return url.path;
     };
 
     FileSystemAccess.prototype.getFileExtension = function (path) {
@@ -268,7 +268,7 @@ var FileSystemAccess = (function () {
     };
 
     FileSystemAccess.prototype.deleteEntity = function (path, onSuccess, onError) {
-        var fileManager = Foundation.NSFileManager.defaultManager();
+        var fileManager = NSFileManager.defaultManager();
         if (!fileManager.removeItemAtPathError(path, null)) {
             if (onError) {
                 onError(new Error("Failed to delete file at path '" + path + "'"));
@@ -282,7 +282,7 @@ var FileSystemAccess = (function () {
 
     FileSystemAccess.prototype.enumEntities = function (path, callback, onError) {
         try  {
-            var fileManager = Foundation.NSFileManager.defaultManager();
+            var fileManager = NSFileManager.defaultManager();
             var files = fileManager.contentsOfDirectoryAtPathError(path, null);
 
             if (!files) {
@@ -296,7 +296,7 @@ var FileSystemAccess = (function () {
             var fileInfos = new Array();
             var file, i, info, retVal;
 
-            for (i = 0; i < files.count(); i++) {
+            for (i = 0; i < files.count; i++) {
                 file = files.objectAtIndex(i);
 
                 info = {
@@ -325,14 +325,14 @@ var FileSystemAccess = (function () {
     };
 
     FileSystemAccess.prototype.normalizePath = function (path) {
-        var nsString = Foundation.NSString.stringWithString(path);
-        var normalized = nsString.stringByStandardizingPath();
+        var nsString = NSString.stringWithString(path);
+        var normalized = nsString.stringByStandardizingPath;
 
         return normalized;
     };
 
     FileSystemAccess.prototype.joinPath = function (left, right) {
-        var nsString = Foundation.NSString.stringWithString(left);
+        var nsString = NSString.stringWithString(left);
         return nsString.stringByAppendingPathComponent(right);
     };
 
@@ -341,17 +341,16 @@ var FileSystemAccess = (function () {
             return "";
         }
 
-        var nsArray = new Foundation.NSMutableArray(paths.length);
+        var nsArray = NSMutableArray.alloc().initWithCapacity(paths.length);
 
         var i;
         for (i = 0; i < paths.length; i++) {
             nsArray.addObject(paths[i]);
         }
 
-        var nsString = Foundation.NSString.stringWithString(Foundation.NSString.pathWithComponents(nsArray));
-        return nsString.stringByStandardizingPath();
+        var nsString = NSString.stringWithString(NSString.pathWithComponents(nsArray));
+        return nsString.stringByStandardizingPath;
     };
     return FileSystemAccess;
 })();
 exports.FileSystemAccess = FileSystemAccess;
-//# sourceMappingURL=file-system-access.ios.js.map

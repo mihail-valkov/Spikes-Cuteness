@@ -13,4 +13,3 @@ exports.onLowMemory = undefined;
 exports.android = undefined;
 
 exports.ios = undefined;
-//# sourceMappingURL=application-common.js.map

@@ -1,8 +1,12 @@
 ﻿var appModule = require("application/application-common");
 
+var frame = require("ui/frame");
+
 require("utils/module-merge").merge(appModule, exports);
 
 var callbacks = android.app.Application.ActivityLifecycleCallbacks;
+
+exports.mainModule;
 
 var initEvents = function () {
     var androidApp = exports.android;
@@ -16,10 +20,16 @@ var initEvents = function () {
                     androidApp.onActivityCreated(activity, bundle);
                 }
             }
+
+            androidApp.currentContext = activity;
         },
         onActivityDestroyed: function (activity) {
-            if (activity === androidApp.currentActivity) {
-                androidApp.currentActivity = undefined;
+            if (activity === androidApp.foregroundActivity) {
+                androidApp.foregroundActivity = undefined;
+            }
+
+            if (activity === androidApp.currentContext) {
+                androidApp.currentContext = undefined;
             }
 
             if (activity === androidApp.startActivity) {
@@ -35,7 +45,7 @@ var initEvents = function () {
             gc();
         },
         onActivityPaused: function (activity) {
-            if (activity === androidApp.currentActivity) {
+            if (activity === androidApp.foregroundActivity) {
                 if (exports.onSuspend) {
                     exports.onSuspend();
                 }
@@ -46,7 +56,7 @@ var initEvents = function () {
             }
         },
         onActivityResumed: function (activity) {
-            if (activity === androidApp.currentActivity) {
+            if (activity === androidApp.foregroundActivity) {
                 if (exports.onResume) {
                     exports.onResume();
                 }
@@ -62,7 +72,7 @@ var initEvents = function () {
             }
         },
         onActivityStarted: function (activity) {
-            androidApp.currentActivity = activity;
+            androidApp.foregroundActivity = activity;
 
             if (androidApp.onActivityStarted) {
                 androidApp.onActivityStarted(activity);
@@ -78,18 +88,22 @@ var initEvents = function () {
     return lifecycleCallbacks;
 };
 
-var initialized;
-exports.init = function (nativeApp) {
-    if (initialized) {
-        return;
+function init(nativeApp) {
+    var androidApp = new AndroidApplication(nativeApp);
+    exports.android = androidApp;
+    androidApp.init();
+}
+
+app.init({
+    getActivity: function (intent) {
+        return exports.android.getActivity(intent);
+    },
+    onCreate: function () {
+        init(this);
     }
+});
 
-    var app = new AndroidApplication(nativeApp);
-    exports.android = app;
-    app.init();
-
-    initialized = true;
-};
+exports.mainModule;
 
 var AndroidApplication = (function () {
     function AndroidApplication(nativeApp) {
@@ -97,6 +111,28 @@ var AndroidApplication = (function () {
         this.packageName = nativeApp.getPackageName();
         this.context = nativeApp.getApplicationContext();
     }
+    AndroidApplication.prototype.getActivity = function (intent) {
+        var isMain = false;
+
+        if (intent && intent.Action === android.content.Intent.ACTION_MAIN) {
+            if (exports.onLaunch) {
+                exports.onLaunch(intent);
+            }
+        }
+
+        var topFrame = frame.topmost();
+        if (!topFrame) {
+            if (exports.mainModule) {
+                topFrame = new frame.Frame();
+                topFrame.navigate(exports.mainModule);
+            } else {
+                throw new Error("A Frame must be used to navigate to a Page.");
+            }
+        }
+
+        return topFrame.android.onActivityRequested(intent);
+    };
+
     AndroidApplication.prototype.init = function () {
         this._eventsToken = initEvents();
         this.nativeApp.registerActivityLifecycleCallbacks(this._eventsToken);
@@ -104,4 +140,6 @@ var AndroidApplication = (function () {
     };
     return AndroidApplication;
 })();
-//# sourceMappingURL=application.android.js.map
+
+exports.start = function () {
+};

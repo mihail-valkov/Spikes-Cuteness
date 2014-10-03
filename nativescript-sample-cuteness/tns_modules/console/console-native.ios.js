@@ -1,5 +1,4 @@
 ﻿function nslog(prefix, message) {
-    Foundation.NSLog("%@: %@", [{ type: PrimitiveType.POINTER, value: prefix }, { type: PrimitiveType.POINTER, value: message }]);
 }
 
 exports.helper_log = function (message) {
@@ -19,6 +18,5 @@ exports.warn = function (message) {
 };
 
 exports.timeMillis = function () {
-    return QuartzCore.CACurrentMediaTime() * 1000;
+    return CACurrentMediaTime() * 1000;
 };
-//# sourceMappingURL=console-native.ios.js.map

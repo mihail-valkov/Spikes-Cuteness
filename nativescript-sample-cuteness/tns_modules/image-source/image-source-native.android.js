@@ -40,4 +40,3 @@ exports.saveToFile = function (instance, path, format, quality) {
     outputStream.close();
     return res;
 };
-//# sourceMappingURL=image-source-native.android.js.map

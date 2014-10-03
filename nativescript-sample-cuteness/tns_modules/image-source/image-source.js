@@ -120,4 +120,3 @@ function fromUrl(url) {
     return http.getImage(url);
 }
 exports.fromUrl = fromUrl;
-//# sourceMappingURL=image-source.impl.js.map

@@ -1,81 +1,139 @@
 ﻿var appModule = require("application/application-common");
+var frame = require("ui/frame");
+
+var geometry = require("utils/geometry");
 
 require("utils/module-merge").merge(appModule, exports);
 
-var initialized;
-exports.init = function (nativeApp) {
-    if (initialized) {
-        return;
+exports.mainModule;
+
+var RootWindow = (function () {
+    function RootWindow() {
+        var WindowClass = UIWindow.extend({
+            layoutSubviews: function () {
+                this.rootWindow.layoutSubviews();
+            }
+        });
+
+        this._uiWindow = new WindowClass(UIScreen.mainScreen().bounds);
+        this._uiWindow.autoresizesSubviews = false;
+        this._uiWindow.autoresizingMask = 0 /* UIViewAutoresizingNone */;
+        this._uiWindow.rootWindow = this;
     }
+    Object.defineProperty(RootWindow.prototype, "uiWindow", {
+        get: function () {
+            return this._uiWindow;
+        },
+        enumerable: true,
+        configurable: true
+    });
 
-    var app = new iOSApplication(nativeApp);
-    exports.ios = app;
-    app.init();
+    RootWindow.prototype.layoutSubviews = function () {
+        if (!this._frame) {
+            return;
+        }
 
-    initialized = true;
-};
+        var window = this._uiWindow;
+        var statusFrame = UIApplication.sharedApplication().statusBarFrame;
+        var statusBarHeight = 0;
+
+        try  {
+            statusBarHeight = Math.min(statusFrame.size.width, statusFrame.size.height);
+        } catch (ex) {
+            console.log("exception: " + ex);
+        }
+
+        var windowFrame = window.frame;
+        var transformedBounds = windowFrame;
+        var bounds;
+
+        var device = UIDevice.currentDevice();
+        if (device.orientation === 3 /* UIDeviceOrientationLandscapeLeft */ || device.orientation === 4 /* UIDeviceOrientationLandscapeRight */) {
+            bounds = new geometry.Rect(transformedBounds.origin.x + statusBarHeight, transformedBounds.origin.y, transformedBounds.size.height - statusBarHeight, transformedBounds.size.width);
+        } else {
+            bounds = new geometry.Rect(transformedBounds.origin.x, transformedBounds.origin.y + statusBarHeight, transformedBounds.size.width, transformedBounds.size.height - statusBarHeight);
+        }
+
+        this._frame.measure(bounds.size);
+        this._frame.arrange(bounds);
+    };
+    return RootWindow;
+})();
 
 var iOSApplication = (function () {
-    function iOSApplication(nativeApp) {
-        this.nativeApp = UIKit.UIApplication.sharedApplication();
+    function iOSApplication() {
+        this.nativeApp = UIApplication.sharedApplication();
     }
     iOSApplication.prototype.init = function () {
         var that = this;
-        UIKit.UIResponder.extends({}, {
-            name: "TNSAppDelegate"
-        }).implements({
-            protocol: "UIApplicationDelegate",
-            implementation: {
-                applicationDidFinishLaunchingWithOptions: function () {
-                    log("Application launched: applicationDidFinishLaunchingWithOptions.");
+        UIResponder.extend({
+            applicationDidFinishLaunchingWithOptions: function () {
+                var rootWindow = new RootWindow();
+                var window = rootWindow.uiWindow;
+                this.window = window;
+                this.window.backgroundColor = UIColor.whiteColor();
 
-                    this.window = new UIKit.UIWindow(UIKit.UIScreen.mainScreen().bounds);
-                    this.window.backgroundColor = UIKit.UIColor.whiteColor();
-                    this.window.makeKeyAndVisible();
+                if (exports.onLaunch) {
+                    exports.onLaunch();
+                }
 
-                    if (exports.onLaunch) {
-                        that.rootController = exports.onLaunch();
-                        this.window.rootViewController = that.rootController;
+                var topFrame = frame.topmost();
+                if (!topFrame) {
+                    if (exports.mainModule) {
+                        topFrame = new frame.Frame();
+                        topFrame.navigate(exports.mainModule);
                     } else {
-                        log("Missing Application.onLaunch");
-                    }
-
-                    log("applicationDidFinishLaunchingWithOptions finished.");
-                    return true;
-                },
-                applicationDidBecomeActive: function (application) {
-                    log("applicationDidBecomeActive: " + application);
-                    if (exports.onResume) {
-                        exports.onResume();
-                    }
-                },
-                applicationWillResignActive: function (application) {
-                    log("applicationWillResignActive: " + application);
-                },
-                applicationDidEnterBackground: function (application) {
-                    log("applicationDidEnterBackground: " + application);
-                    if (exports.onSuspend) {
-                        exports.onSuspend();
-                    }
-                },
-                applicationWillEnterForeground: function (application) {
-                    log("applicationWillEnterForeground: " + application);
-                },
-                applicationWillTerminate: function (application) {
-                    log("applicationWillTerminate: " + application);
-                    if (exports.onExit) {
-                        exports.onExit();
-                    }
-                },
-                applicationDidReceiveMemoryWarning: function (application) {
-                    log("applicationDidReceiveMemoryWarning: " + application);
-                    if (exports.onLowMemory) {
-                        exports.onLowMemory();
+                        return;
                     }
                 }
+                rootWindow._frame = topFrame;
+                this.window.rootViewController = topFrame.ios.controller;
+
+                this.window.makeKeyAndVisible();
+                return true;
+            },
+            applicationDidBecomeActive: function (application) {
+                if (exports.onResume) {
+                    exports.onResume();
+                }
+            },
+            applicationWillResignActive: function (application) {
+            },
+            applicationDidEnterBackground: function (application) {
+                if (exports.onSuspend) {
+                    exports.onSuspend();
+                }
+            },
+            applicationWillEnterForeground: function (application) {
+            },
+            applicationWillTerminate: function (application) {
+                if (exports.onExit) {
+                    exports.onExit();
+                }
+            },
+            applicationDidReceiveMemoryWarning: function (application) {
+                if (exports.onLowMemory) {
+                    exports.onLowMemory();
+                }
+            },
+            applicationOpenURLSourceApplicationAnnotation: function (application, url, annotation) {
+                var dictionary = new NSDictionary();
+                dictionary.setValueForKey("TLKApplicationOpenURL", url);
+                dictionary.setValueForKey("TLKApplication", application);
+                NSNotificationCenter.defaultCenter().postNotificationNameObjectUserInfo("com.telerik.TLKApplicationOpenURL", null, dictionary);
             }
+        }, {
+            name: "TNSAppDelegate",
+            protocols: [UIApplicationDelegate]
         });
     };
     return iOSApplication;
 })();
-//# sourceMappingURL=application.ios.js.map
+
+var app = new iOSApplication();
+exports.ios = app;
+app.init();
+
+exports.start = function () {
+    UIApplicationMain(0, null, null, "TNSAppDelegate");
+};

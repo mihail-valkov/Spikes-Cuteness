@@ -16,7 +16,10 @@ function setTimeout(callback, milliseconds) {
     var runnable = new java.lang.Runnable({
         run: function () {
             callback();
-            timeoutCallbacks[id] = null;
+
+            if (timeoutCallbacks && timeoutCallbacks[id]) {
+                timeoutCallbacks[id] = null;
+            }
         }
     });
 
@@ -41,11 +44,12 @@ exports.clearTimeout = clearTimeout;
 function setInterval(callback, milliseconds) {
     if (typeof milliseconds === "undefined") { milliseconds = 0; }
     var id = createHadlerAndGetId();
+    var handler = timeoutHandler;
 
     var runnable = new java.lang.Runnable({
         run: function () {
             callback();
-            timeoutHandler.postDelayed(runnable, long(milliseconds));
+            handler.postDelayed(runnable, long(milliseconds));
         }
     });
 
@@ -60,4 +64,3 @@ function setInterval(callback, milliseconds) {
 exports.setInterval = setInterval;
 
 exports.clearInterval = exports.clearTimeout;
-//# sourceMappingURL=timer.android.js.map

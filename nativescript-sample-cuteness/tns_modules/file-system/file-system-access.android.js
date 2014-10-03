@@ -1,5 +1,6 @@
 ﻿var appModule = require("application");
-var textModule = require("text/text");
+var textModule = require("text");
+var types = require("utils/types");
 
 var FileSystemAccess = (function () {
     function FileSystemAccess() {
@@ -213,6 +214,10 @@ var FileSystemAccess = (function () {
         return dir.getAbsolutePath();
     };
 
+    FileSystemAccess.prototype.getCurrentAppFolderPath = function () {
+        return this.getDocumentsFolderPath();
+    };
+
     FileSystemAccess.prototype.readText = function (path, onSuccess, onError, encoding) {
         try  {
             var javaFile = new java.io.File(path);
@@ -229,7 +234,7 @@ var FileSystemAccess = (function () {
             var result = "";
             while (true) {
                 line = bufferedReader.readLine();
-                if (!line) {
+                if (types.isUndefined(line)) {
                     break;
                 }
 
@@ -411,4 +416,3 @@ var FileSystemAccess = (function () {
     return FileSystemAccess;
 })();
 exports.FileSystemAccess = FileSystemAccess;
-//# sourceMappingURL=file-system-access.android.js.map

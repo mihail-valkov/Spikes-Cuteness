@@ -30,7 +30,7 @@ function unfoldCore(elements, deferred, unspool, seed) {
         return;
     }
 
-    while (result.next && result.promise.status == 2 /* Resolved */) {
+    while (result.next && result.promise.status === 2 /* Resolved */) {
         elements.push(result.promise.result);
         result = unspool(result.next);
         if (!result) {
@@ -41,10 +41,11 @@ function unfoldCore(elements, deferred, unspool, seed) {
 
     result.promise.done(function (v) {
         elements.push(v);
-        if (!result.next)
+        if (!result.next) {
             deferred.resolve(elements);
-        else
+        } else {
             unfoldCore(elements, deferred, unspool, result.next);
+        }
     }).fail(function (e) {
         deferred.reject(e);
     });
@@ -79,11 +80,13 @@ function when() {
         p.done(function (v) {
             results[i] = v;
             ++resolved;
-            if (resolved === promises.length && allDone.status !== 1 /* Rejected */)
+            if (resolved === promises.length && allDone.status !== 1 /* Rejected */) {
                 allDone.resolve(results);
+            }
         }).fail(function (e) {
-            if (allDone.status !== 1 /* Rejected */)
+            if (allDone.status !== 1 /* Rejected */) {
                 allDone.reject(new Error("when: one or more promises were rejected"));
+            }
         });
     });
 
@@ -162,8 +165,9 @@ var DeferredI = (function () {
 
     Object.defineProperty(DeferredI.prototype, "result", {
         get: function () {
-            if (this._status != 2 /* Resolved */)
+            if (this._status !== 2 /* Resolved */) {
                 throw new Error("Promise: result not available");
+            }
             return this._result;
         },
         enumerable: true,
@@ -172,8 +176,9 @@ var DeferredI = (function () {
 
     Object.defineProperty(DeferredI.prototype, "error", {
         get: function () {
-            if (this._status != 1 /* Rejected */)
+            if (this._status !== 1 /* Rejected */) {
                 throw new Error("Promise: rejection reason not available");
+            }
             return this._error;
         },
         enumerable: true,
@@ -210,8 +215,9 @@ var DeferredI = (function () {
             return this;
         }
 
-        if (this.status !== 0 /* Unfulfilled */)
+        if (this.status !== 0 /* Unfulfilled */) {
             return this;
+        }
 
         var prev = this._resolved;
         this._resolved = function (v) {
@@ -228,8 +234,9 @@ var DeferredI = (function () {
             return this;
         }
 
-        if (this.status !== 0 /* Unfulfilled */)
+        if (this.status !== 0 /* Unfulfilled */) {
             return this;
+        }
 
         var prev = this._rejected;
         this._rejected = function (e) {
@@ -251,8 +258,9 @@ var DeferredI = (function () {
     };
 
     DeferredI.prototype.resolve = function (result) {
-        if (this._status !== 0 /* Unfulfilled */)
+        if (this._status !== 0 /* Unfulfilled */) {
             throw new Error("tried to resolve a fulfilled promise");
+        }
 
         this._result = result;
         this._status = 2 /* Resolved */;
@@ -263,8 +271,9 @@ var DeferredI = (function () {
     };
 
     DeferredI.prototype.reject = function (err) {
-        if (this._status !== 0 /* Unfulfilled */)
+        if (this._status !== 0 /* Unfulfilled */) {
             throw new Error("tried to reject a fulfilled promise");
+        }
 
         this._error = err;
         this._status = 1 /* Rejected */;
@@ -306,8 +315,9 @@ var IteratorI = (function () {
         var _this = this;
         var res = this.f();
         return res.then(function (value) {
-            if (exports.isUndefined(value))
+            if (exports.isUndefined(value)) {
                 return false;
+            }
 
             _this.current = value;
             return true;
@@ -341,4 +351,3 @@ function isUndefined(v) {
     return typeof v === 'undefined';
 }
 exports.isUndefined = isUndefined;
-//# sourceMappingURL=promises.js.map

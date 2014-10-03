@@ -1,4 +1,7 @@
 ﻿var promises = require("promises");
+var imageSource = require("image-source");
+
+var USER_AGENT = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2049.0 Safari/537.36";
 
 function request(options) {
     var d = promises.defer();
@@ -6,18 +9,20 @@ function request(options) {
     try  {
         var request = new com.koushikdutta.async.http.AsyncHttpRequest(java.net.URI.create(options.url), options.method);
 
+        request.addHeader("User-Agent", USER_AGENT);
+
         if (options.headers) {
             for (var key in options.headers) {
                 request.addHeader(key, options.headers[key]);
             }
         }
 
-        if (typeof options.timeout == "number") {
+        if (typeof options.timeout === "number") {
             request.setTimeout(options.timeout);
         }
 
-        if (typeof options.content == "string") {
-            var stringBody = com.koushikdutta.async.http.body.StringBody.extends({
+        if (typeof options.content === "string") {
+            var stringBody = com.koushikdutta.async.http.body.StringBody.extend({
                 getContentType: function () {
                     return null;
                 }
@@ -63,7 +68,15 @@ function request(options) {
                                         return JSON.parse(outputStream.toString());
                                     },
                                     toImage: function () {
-                                        return require("image-source").fromData(new java.io.ByteArrayInputStream(outputStream.toByteArray()));
+                                        var d = promises.defer();
+                                        try  {
+                                            var stream = new java.io.ByteArrayInputStream(outputStream.toByteArray());
+                                            d.resolve(imageSource.fromNativeSource(android.graphics.BitmapFactory.decodeStream(stream)));
+                                        } catch (e) {
+                                            d.reject(e);
+                                        }
+
+                                        return d.promise();
                                     }
                                 },
                                 statusCode: rawHeaders.getResponseCode(),
@@ -84,4 +97,3 @@ function request(options) {
     return d.promise();
 }
 exports.request = request;
-//# sourceMappingURL=http-request.android.js.map

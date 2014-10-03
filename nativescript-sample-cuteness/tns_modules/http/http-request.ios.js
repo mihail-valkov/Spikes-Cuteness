@@ -1,16 +1,22 @@
 ﻿var promises = require("promises");
 
+var imageSource = require("image-source");
+
+var USER_AGENT = "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25";
+
 function request(options) {
     var d = promises.defer();
 
     try  {
-        var sessionConfig = Foundation.NSURLSessionConfiguration.defaultSessionConfiguration();
-        var queue = Foundation.NSOperationQueue.mainQueue();
-        var session = Foundation.NSURLSession.sessionWithConfigurationDelegateDelegateQueue(sessionConfig, null, queue);
+        var sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration();
+        var queue = NSOperationQueue.mainQueue();
+        var session = NSURLSession.sessionWithConfigurationDelegateDelegateQueue(sessionConfig, null, queue);
 
-        var urlRequest = Foundation.NSMutableURLRequest.requestWithURL(Foundation.NSURL.URLWithString(options.url));
+        var urlRequest = NSMutableURLRequest.requestWithURL(NSURL.URLWithString(options.url));
 
-        urlRequest.setHTTPMethod(typeof options.method !== "undefined" ? options.method : "GET");
+        urlRequest.HTTPMethod = typeof options.method !== "undefined" ? options.method : "GET";
+
+        urlRequest.setValueForHTTPHeaderField(USER_AGENT, "User-Agent");
 
         if (options.headers) {
             for (var header in options.headers) {
@@ -18,25 +24,25 @@ function request(options) {
             }
         }
 
-        if (typeof options.timeout == "number") {
-            urlRequest.setTimeoutInterval(options.timeout * 1000);
+        if (typeof options.timeout === "number") {
+            urlRequest.timeoutInterval = options.timeout * 1000;
         }
 
-        if (typeof options.content == "string") {
-            urlRequest.setHTTPBody(Foundation.NSString.initWithString(options.content).dataUsingEncoding(4));
+        if (typeof options.content === "string") {
+            urlRequest.HTTPBody = NSString.alloc().initWithString(options.content).dataUsingEncoding(4);
         } else if (typeof options.content !== "undefined") {
-            urlRequest.setHTTPBody(options.content);
+            urlRequest.HTTPBody = options.content;
         }
 
         var dataTask = session.dataTaskWithRequestCompletionHandler(urlRequest, function (data, response, error) {
             if (error) {
-                d.reject(new Error(error.localizedDescription()));
+                d.reject(new Error(error.localizedDescription));
             } else {
                 var headers = {};
-                var headerFields = response.allHeaderFields();
-                var keys = headerFields.allKeys();
+                var headerFields = response.allHeaderFields;
+                var keys = headerFields.allKeys;
 
-                for (var i = 0, l = keys.count(); i < l; i++) {
+                for (var i = 0, l = keys.count; i < l; i++) {
                     var key = keys.objectAtIndex(i);
                     headers[key] = headerFields.valueForKey(key);
                 }
@@ -51,10 +57,12 @@ function request(options) {
                             return JSON.parse(NSDataToString(data));
                         },
                         toImage: function () {
-                            return require("image-source").fromData(data);
+                            var imagePromise = promises.defer();
+                            imagePromise.resolve(imageSource.fromData(data));
+                            return imagePromise.promise();
                         }
                     },
-                    statusCode: response.statusCode(),
+                    statusCode: response.statusCode,
                     headers: headers
                 });
             }
@@ -69,6 +77,5 @@ function request(options) {
 exports.request = request;
 
 function NSDataToString(data) {
-    return Foundation.NSString.initWithDataEncoding(data, 4).toString();
+    return NSString.alloc().initWithDataEncoding(data, 4).toString();
 }
-//# sourceMappingURL=http-request.ios.js.map
