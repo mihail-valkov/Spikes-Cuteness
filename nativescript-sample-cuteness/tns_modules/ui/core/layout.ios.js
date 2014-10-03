@@ -297,6 +297,18 @@ var LayoutInfo = (function () {
         if (nativeView) {
             nativeView.setNeedsLayout();
         }
+
+        var parent = this.parent;
+        while (parent) {
+            parent._invalidateMeasure();
+
+            var isPanel = !!parent.children;
+            if (isPanel) {
+                break;
+            }
+
+            parent = parent.parent;
+        }
     };
 
     LayoutInfo.prototype.invalidateArrange = function () {
