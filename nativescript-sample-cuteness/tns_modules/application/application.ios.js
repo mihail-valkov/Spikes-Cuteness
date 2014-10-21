@@ -117,9 +117,9 @@ var iOSApplication = (function () {
                 }
             },
             applicationOpenURLSourceApplicationAnnotation: function (application, url, annotation) {
-                var dictionary = new NSDictionary();
-                dictionary.setValueForKey("TLKApplicationOpenURL", url);
-                dictionary.setValueForKey("TLKApplication", application);
+                var dictionary = new NSMutableDictionary();
+                dictionary.setObjectForKey(url, "TLKApplicationOpenURL");
+                dictionary.setObjectForKey(application, "TLKApplication");
                 NSNotificationCenter.defaultCenter().postNotificationNameObjectUserInfo("com.telerik.TLKApplicationOpenURL", null, dictionary);
             }
         }, {
