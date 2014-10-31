@@ -1,6 +1,6 @@
 ﻿var Common = require("local-settings/local-settings-common");
 
-var userDefaults = Foundation.NSUserDefaults.standardUserDefaults();
+var userDefaults = NSUserDefaults.standardUserDefaults();
 
 exports.hasKey = function (key) {
     Common.checkKey(key);
@@ -57,4 +57,3 @@ exports.remove = function (key) {
     userDefaults.removeObjectForKey(key);
     userDefaults.synchronize();
 };
-//# sourceMappingURL=local-settings.ios.js.map

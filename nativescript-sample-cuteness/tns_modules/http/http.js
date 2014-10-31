@@ -33,7 +33,9 @@ function getImage(arg) {
     var d = promises.defer();
 
     request.request(typeof arg === "string" ? { url: arg, method: "GET" } : arg).then(function (r) {
-        return d.resolve(r.content.toImage());
+        r.content.toImage().then(function (source) {
+            return d.resolve(source);
+        });
     }).fail(function (e) {
         return d.reject(e);
     });
@@ -41,4 +43,3 @@ function getImage(arg) {
     return d.promise();
 }
 exports.getImage = getImage;
-//# sourceMappingURL=http.impl.js.map

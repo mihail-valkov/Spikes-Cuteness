@@ -66,4 +66,3 @@ exports.getLocation = function (options) {
 
     return d.promise();
 };
-//# sourceMappingURL=location.impl.js.map

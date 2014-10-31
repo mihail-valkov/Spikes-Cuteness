@@ -92,6 +92,7 @@ var FileSystemEntity = (function () {
     };
 
     FileSystemEntity.prototype.rename = function (newName) {
+        var _this = this;
         var deferred = promises.defer();
 
         if (this instanceof Folder) {
@@ -111,13 +112,12 @@ var FileSystemEntity = (function () {
         var path = parentFolder.path;
         var newPath = fileAccess.joinPath(path, newName);
 
-        var that = this;
         var localSucceess = function () {
-            that[pathProperty] = newPath;
-            that[nameProperty] = newName;
+            _this[pathProperty] = newPath;
+            _this[nameProperty] = newName;
 
-            if (that instanceof File) {
-                that[extensionProperty] = fileAccess.getFileExtension(newPath);
+            if (_this instanceof File) {
+                _this[extensionProperty] = fileAccess.getFileExtension(newPath);
             }
 
             deferred.resolve();
@@ -203,19 +203,19 @@ var File = (function (_super) {
     });
 
     File.prototype.readText = function (encoding) {
+        var _this = this;
         this.checkAccess();
 
         var deferred = promises.defer();
         this[fileLockedProperty] = true;
 
-        var that = this;
         var localSuccess = function (content) {
-            that[fileLockedProperty] = false;
+            _this[fileLockedProperty] = false;
             deferred.resolve(content);
         };
 
         var localError = function (error) {
-            that[fileLockedProperty] = false;
+            _this[fileLockedProperty] = false;
             deferred.reject(error);
         };
 
@@ -399,6 +399,7 @@ exports.Folder = Folder;
 (function (knownFolders) {
     var _documents;
     var _temp;
+    var _app;
 
     knownFolders.documents = function () {
         if (!_documents) {
@@ -420,6 +421,17 @@ exports.Folder = Folder;
         }
 
         return _temp;
+    };
+
+    knownFolders.currentApp = function () {
+        if (!_app) {
+            var path = getFileAccess().getCurrentAppFolderPath();
+            _app = new Folder();
+            _app[pathProperty] = path;
+            _app[isKnownProperty] = true;
+        }
+
+        return _app;
     };
 })(exports.knownFolders || (exports.knownFolders = {}));
 var knownFolders = exports.knownFolders;
@@ -443,4 +455,3 @@ var knownFolders = exports.knownFolders;
     _path.separator = getFileAccess().getPathSeparator();
 })(exports.path || (exports.path = {}));
 var path = exports.path;
-//# sourceMappingURL=file-system.impl.js.map

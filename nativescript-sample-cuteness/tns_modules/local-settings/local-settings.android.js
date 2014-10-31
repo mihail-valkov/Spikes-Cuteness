@@ -62,4 +62,3 @@ exports.remove = function (key) {
     editor.remove(key);
     editor.commit();
 };
-//# sourceMappingURL=local-settings.android.js.map

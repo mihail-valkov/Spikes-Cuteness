@@ -7,4 +7,3 @@
     encoding.UTF_8 = "UTF-8";
 })(exports.encoding || (exports.encoding = {}));
 var encoding = exports.encoding;
-//# sourceMappingURL=text.android.js.map

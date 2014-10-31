@@ -19,4 +19,3 @@ exports.warn = function (message) {
 exports.timeMillis = function () {
     return java.lang.System.nanoTime() / 1000000;
 };
-//# sourceMappingURL=console-native.android.js.map

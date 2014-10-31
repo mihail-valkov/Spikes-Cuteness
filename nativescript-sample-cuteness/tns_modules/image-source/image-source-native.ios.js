@@ -1,13 +1,13 @@
 ﻿exports.fromResource = function (name) {
-    return UIKit.UIImage.imageNamed(name);
+    return UIImage.imageNamed(name);
 };
 
 exports.fromFile = function (path) {
-    return UIKit.UIImage.imageWithContentsOfFile(path);
+    return UIImage.imageWithContentsOfFile(path);
 };
 
 exports.fromData = function (data) {
-    return UIKit.UIImage.imageWithData(data);
+    return UIImage.imageWithData(data);
 };
 
 exports.saveToFile = function (instance, path, format, quality) {
@@ -19,10 +19,10 @@ exports.saveToFile = function (instance, path, format, quality) {
     var data = null;
     switch (format) {
         case 0:
-            data = UIKit.UIImagePNGRepresentation(instance);
+            data = UIImagePNGRepresentation(instance);
             break;
         case 1:
-            data = UIKit.UIImageJPEGRepresentation(instance, ('undefined' == typeof quality) ? 1.0 : quality);
+            data = UIImageJPEGRepresentation(instance, ('undefined' === typeof quality) ? 1.0 : quality);
             break;
     }
     if (null != data) {
@@ -30,4 +30,3 @@ exports.saveToFile = function (instance, path, format, quality) {
     }
     return res;
 };
-//# sourceMappingURL=image-source-native.ios.js.map

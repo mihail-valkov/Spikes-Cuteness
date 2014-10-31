@@ -17,4 +17,3 @@ var LocationRegion = (function () {
     return LocationRegion;
 })();
 exports.LocationRegion = LocationRegion;
-//# sourceMappingURL=location-types.js.map
