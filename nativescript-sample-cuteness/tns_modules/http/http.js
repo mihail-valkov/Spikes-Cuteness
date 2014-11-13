@@ -1,45 +1,22 @@
-var promises = require("promises");
-var request = require("http/http-request");
-
-require("utils/module-merge").merge(request, exports);
-
+var httpRequest = require("http/http-request");
+require("utils/module-merge").merge(httpRequest, exports);
 function getString(arg) {
-    var d = promises.defer();
-
-    request.request(typeof arg === "string" ? { url: arg, method: "GET" } : arg).then(function (r) {
-        return d.resolve(r.content.toString());
-    }).fail(function (e) {
-        return d.reject(e);
+    return new Promise(function (resolve, reject) {
+        httpRequest.request(typeof arg === "string" ? { url: arg, method: "GET" } : arg).then(function (r) { return resolve(r.content.toString()); }, function (e) { return reject(e); });
     });
-
-    return d.promise();
 }
 exports.getString = getString;
-
 function getJSON(arg) {
-    var d = promises.defer();
-
-    request.request(typeof arg === "string" ? { url: arg, method: "GET" } : arg).then(function (r) {
-        return d.resolve(r.content.toJSON());
-    }).fail(function (e) {
-        return d.reject(e);
+    return new Promise(function (resolve, reject) {
+        httpRequest.request(typeof arg === "string" ? { url: arg, method: "GET" } : arg).then(function (r) { return resolve(r.content.toJSON()); }, function (e) { return reject(e); });
     });
-
-    return d.promise();
 }
 exports.getJSON = getJSON;
-
 function getImage(arg) {
-    var d = promises.defer();
-
-    request.request(typeof arg === "string" ? { url: arg, method: "GET" } : arg).then(function (r) {
-        r.content.toImage().then(function (source) {
-            return d.resolve(source);
-        });
-    }).fail(function (e) {
-        return d.reject(e);
+    return new Promise(function (resolve, reject) {
+        httpRequest.request(typeof arg === "string" ? { url: arg, method: "GET" } : arg).then(function (r) {
+            r.content.toImage().then(function (source) { return resolve(source); });
+        }, function (e) { return reject(e); });
     });
-
-    return d.promise();
 }
 exports.getImage = getImage;

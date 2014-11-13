@@ -1,25 +1,20 @@
-﻿var types = require("utils/types");
-
+var types = require("utils/types");
 var _enabled = false;
 var _categories = {};
 var _writers = [];
 var _eventListeners = [];
-
 function enable() {
     _enabled = true;
 }
 exports.enable = enable;
-
 function disable() {
     _enabled = false;
 }
 exports.disable = disable;
-
 function addWriter(writer) {
     _writers.push(writer);
 }
 exports.addWriter = addWriter;
-
 function removeWriter(writer) {
     var index = _writers.indexOf(writer);
     if (index >= 0) {
@@ -27,46 +22,38 @@ function removeWriter(writer) {
     }
 }
 exports.removeWriter = removeWriter;
-
 function clearWriters() {
     if (_writers.length > 0) {
         _writers.splice(0, _writers.length);
     }
 }
 exports.clearWriters = clearWriters;
-
 function setCategories(categories) {
     var split = categories.split(",");
     _categories = {};
-
     var i;
     for (i = 0; i < split.length; i++) {
         _categories[split[i].trim()] = true;
     }
 }
 exports.setCategories = setCategories;
-
 function write(message, category, type) {
     if (!_enabled) {
         return;
     }
-
     if (!(category in _categories)) {
         return;
     }
-
     var i;
     for (i = 0; i < _writers.length; i++) {
         _writers[i].write(message, category, type);
     }
 }
 exports.write = write;
-
 function notifyEvent(object, name, data) {
     if (!_enabled) {
         return;
     }
-
     var i, listener, filters;
     for (i = 0; i < _eventListeners.length; i++) {
         listener = _eventListeners[i];
@@ -77,18 +64,17 @@ function notifyEvent(object, name, data) {
                     listener.on(object, name, data);
                 }
             });
-        } else {
+        }
+        else {
             listener.on(object, name, data);
         }
     }
 }
 exports.notifyEvent = notifyEvent;
-
 function addEventListener(listener) {
     _eventListeners.push(listener);
 }
 exports.addEventListener = addEventListener;
-
 function removeEventListener(listener) {
     var index = _eventListeners.indexOf(listener);
     if (index >= 0) {
@@ -96,27 +82,25 @@ function removeEventListener(listener) {
     }
 }
 exports.removeEventListener = removeEventListener;
-
+var messageType;
 (function (messageType) {
     messageType.log = 0;
     messageType.info = 1;
     messageType.warn = 2;
     messageType.error = 3;
-})(exports.messageType || (exports.messageType = {}));
-var messageType = exports.messageType;
-
+})(messageType = exports.messageType || (exports.messageType = {}));
+var categories;
 (function (categories) {
     categories.VisualTreeEvents = "VisualTreeEvents";
     categories.Layout = "Layout";
     categories.Style = "Style";
     categories.ViewHierarchy = "ViewHierarchy";
     categories.NativeLifecycle = "NativeLifecycle";
+    categories.Debug = "Debug";
     categories.Navigation = "Navigation";
     categories.Test = "Test";
-    categories.All = categories.VisualTreeEvents + "," + categories.Layout + "," + categories.Style + "," + categories.ViewHierarchy + "," + categories.NativeLifecycle + "," + categories.Navigation + "," + categories.Test;
-
+    categories.All = categories.VisualTreeEvents + "," + categories.Layout + "," + categories.Style + "," + categories.ViewHierarchy + "," + categories.NativeLifecycle + "," + categories.Debug + "," + categories.Navigation + "," + categories.Test;
     categories.separator = ",";
-
     function concat() {
         var i;
         var result;
@@ -125,16 +109,12 @@ var messageType = exports.messageType;
                 result = arguments[i];
                 continue;
             }
-
             result = result.concat(categories.separator, arguments[i]);
         }
-
         return result;
     }
     categories.concat = concat;
-})(exports.categories || (exports.categories = {}));
-var categories = exports.categories;
-
+})(categories = exports.categories || (exports.categories = {}));
 var ConsoleWriter = (function () {
     function ConsoleWriter() {
     }
@@ -142,14 +122,13 @@ var ConsoleWriter = (function () {
         if (!console) {
             return;
         }
-
         var msgType;
         if (types.isUndefined(type)) {
             msgType = messageType.log;
-        } else {
+        }
+        else {
             msgType = type;
         }
-
         switch (msgType) {
             case messageType.log:
                 console.log(category + ": " + message);
@@ -167,5 +146,4 @@ var ConsoleWriter = (function () {
     };
     return ConsoleWriter;
 })();
-
-exports.addWriter(new ConsoleWriter());
+addWriter(new ConsoleWriter());

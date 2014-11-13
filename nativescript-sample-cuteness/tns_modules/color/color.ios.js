@@ -1,13 +1,11 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
 var common = require("color/color-common");
-
 var AMP = "#";
-
 var Color = (function (_super) {
     __extends(Color, _super);
     function Color() {
@@ -23,18 +21,14 @@ var Color = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Color.prototype._argbFromString = function (hex) {
-        var hex = this.hex;
         if (hex.charAt(0) === AMP) {
             hex = hex.substr(1);
         }
-
         var intVal = parseInt(hex, 16);
         if (hex.length === 6) {
             intVal |= 255 << 24;
         }
-
         return intVal;
     };
     return Color;

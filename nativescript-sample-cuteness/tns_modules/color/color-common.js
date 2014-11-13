@@ -1,8 +1,6 @@
-﻿var types = require("utils/types");
+var types = require("utils/types");
 var knownColors = require("color/known-colors");
-
 var AMP = "#";
-
 var Color = (function () {
     function Color() {
         if (arguments.length === 1) {
@@ -11,27 +9,32 @@ var Color = (function () {
                 if (knownColors.isKnownName(arg)) {
                     this._hex = knownColors.getKnownColor(arg);
                     this._name = arg;
-                } else {
+                }
+                else {
                     this._hex = arg;
                 }
                 this._argb = this._argbFromString(this._hex);
-            } else if (types.isNumber(arg)) {
+            }
+            else if (types.isNumber(arg)) {
                 this._argb = arg;
-            } else {
+            }
+            else {
                 throw new Error("Expected 1 or 4 constructor parameters.");
             }
             this._parseComponents();
             if (!this._hex) {
                 this._hex = this._buildHex();
             }
-        } else if (arguments.length === 4) {
+        }
+        else if (arguments.length === 4) {
             this._a = arguments[0];
             this._r = arguments[1];
             this._g = arguments[2];
             this._b = arguments[3];
             this._buildArgb();
             this._hex = this._buildHex();
-        } else {
+        }
+        else {
             throw new Error("Expected 1 or 4 constructor parameters.");
         }
     }
@@ -42,7 +45,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "r", {
         get: function () {
             return this._r;
@@ -50,7 +52,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "g", {
         get: function () {
             return this._g;
@@ -58,7 +59,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "b", {
         get: function () {
             return this._b;
@@ -66,7 +66,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "argb", {
         get: function () {
             return this._argb;
@@ -74,7 +73,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "hex", {
         get: function () {
             return this._hex;
@@ -82,7 +80,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "name", {
         get: function () {
             return this._name;
@@ -90,7 +87,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "ios", {
         get: function () {
             return undefined;
@@ -98,7 +94,6 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Color.prototype, "android", {
         get: function () {
             return undefined;
@@ -106,35 +101,28 @@ var Color = (function () {
         enumerable: true,
         configurable: true
     });
-
     Color.prototype._argbFromString = function (hex) {
         return undefined;
     };
-
     Color.prototype._buildHex = function () {
         return AMP + this._componentToHex(this._a) + this._componentToHex(this._r) + this._componentToHex(this._g) + this._componentToHex(this._b);
     };
-
     Color.prototype._componentToHex = function (component) {
         var hex = component.toString(16);
         if (hex.length === 1) {
             hex = "0" + hex;
         }
-
         return hex;
     };
-
     Color.prototype._parseComponents = function () {
         if (!this._argb) {
             throw new Error("Missing the ARGB numeric value");
         }
-
         this._a = (this._argb >> 24) & 255;
         this._r = (this._argb >> 16) & 255;
         this._g = (this._argb >> 8) & 255;
         this._b = this._argb & 255;
     };
-
     Color.prototype._buildArgb = function () {
         this._argb = (this._a << 24) | (this._r << 16) | (this._g << 8) | this._b;
     };

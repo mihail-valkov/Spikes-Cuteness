@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<GridPanel>
+  <GridPanel.columnDefinitions>
+    <ColumnDefinition width="80" />
+    <ColumnDefinition width="*" />
+    <ColumnDefinition width="auto" />
+  </GridPanel.columnDefinitions>
+  <GridPanel.rowDefinitions>
+    <RowDefinition minHeight="50" />
+    <RowDefinition height="25" />
+  </GridPanel.rowDefinitions>
+  <Image id="itemImage" width="72" height="72" margin="3" verticalAlignment="top" rowSpan="2" />
+  <Label id="titleLabel" textWrap="true" cssClass="title" margin="3" col="1" colSpan="2" />
+  <Label id="authorLabel" width="150" cssClass="author" horizontalAlignment="left" verticalAlignment="bottom" margin="3" col="1" row="1" />
+  <Label id="commentsLabel" cssClass="comments" verticalAlignment="bottom" margin="3" col="2" row="1" />
+</GridPanel>

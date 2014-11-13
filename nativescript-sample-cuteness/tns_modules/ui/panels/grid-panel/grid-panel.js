@@ -1,4 +1,4 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
@@ -7,11 +7,12 @@
 var geometry = require("utils/geometry");
 var containers = require("utils/containers");
 var view = require("ui/core/view");
-var panel = require("ui/core/panel");
+var panel = require("ui/panels/panel");
 var definition = require("ui/panels/grid-panel");
 var bm = require("ui/core/bindable");
 var observable = require("ui/core/dependency-observable");
-
+var utils = require("utils/utils");
+var types = require("utils/types");
 var ComparerHelper = (function () {
     function ComparerHelper(x, y) {
         this.x = x;
@@ -19,24 +20,23 @@ var ComparerHelper = (function () {
     }
     return ComparerHelper;
 })();
-
 function CompareNullRefs(helper) {
     var x = helper.x;
     var y = helper.y;
-
     helper.result = 2;
     if (!x) {
         if (!y) {
             helper.result = 0;
-        } else {
+        }
+        else {
             helper.result = -1;
         }
-    } else if (!y) {
+    }
+    else if (!y) {
         helper.result = 1;
     }
     return (helper.result !== 2);
 }
-
 var NumberUtils = (function () {
     function NumberUtils() {
     }
@@ -44,63 +44,50 @@ var NumberUtils = (function () {
         if (value1 === value2) {
             return true;
         }
-
         var delta = value1 - value2;
         return (delta < NumberUtils.Epsilon) && (delta > -NumberUtils.Epsilon);
     };
-
     NumberUtils.greaterThanOrClose = function (value1, value2) {
         return (value1 > value2) || NumberUtils.areClose(value1, value2);
     };
     NumberUtils.Epsilon = 0.00000153;
     return NumberUtils;
 })();
-
 function compareNumbers(x, y) {
     return x - y;
 }
-
 function compareSpanPreferredDistributionOrder(x, y) {
     var helper = new ComparerHelper(x, y);
     if (CompareNullRefs(helper)) {
         return helper.result;
     }
-
     if (x.userSize.isAuto) {
         if (y.userSize.isAuto) {
             return compareNumbers(x.minSize, y.minSize);
         }
         return -1;
     }
-
     if (y.userSize.isAuto) {
         return 1;
     }
-
     return compareNumbers(x.preferredSize, y.preferredSize);
 }
-
 function compareSpanMaxDistributionOrder(x, y) {
     var helper = new ComparerHelper(x, y);
     if (CompareNullRefs(helper)) {
         return helper.result;
     }
-
     if (x.userSize.isAuto) {
         if (y.userSize.isAuto) {
             return compareNumbers(x.sizeCache, y.sizeCache);
         }
-
         return 1;
     }
-
     if (y.userSize.isAuto) {
         return -1;
     }
-
     return compareNumbers(x.sizeCache, y.sizeCache);
 }
-
 function compareStarDistributionOrder(x, y) {
     var helper = new ComparerHelper(x, y);
     if (!CompareNullRefs(helper)) {
@@ -108,14 +95,11 @@ function compareStarDistributionOrder(x, y) {
     }
     return helper.result;
 }
-
 function getDistributionOrderIndexCompareFn(definitions) {
     var compareFn = function (x, y) {
         var definitionX = definitions[x];
         var definitionY = definitions[y];
-
         var helper = new ComparerHelper(definitionX, definitionY);
-
         if (!CompareNullRefs(helper)) {
             var xprime = definitionX.sizeCache - definitionX.minSize;
             var yprime = definitionY.sizeCache - definitionY.minSize;
@@ -125,12 +109,10 @@ function getDistributionOrderIndexCompareFn(definitions) {
     };
     return compareFn;
 }
-
 function getStarDistributionOrderIndexCompareFn(definitions) {
     var comareFn = function (x, y) {
         var definitionX = definitions[x];
         var definitionY = definitions[y];
-
         var helper = new ComparerHelper(definitionX, definitionY);
         if (!CompareNullRefs(helper)) {
             helper.result = compareNumbers(definitionX.sizeCache, definitionY.sizeCache);
@@ -139,7 +121,6 @@ function getStarDistributionOrderIndexCompareFn(definitions) {
     };
     return comareFn;
 }
-
 var DefinitionBase = (function (_super) {
     __extends(DefinitionBase, _super);
     function DefinitionBase(isColumnDefinition) {
@@ -155,29 +136,24 @@ var DefinitionBase = (function (_super) {
     DefinitionBase.IsUserMaxSizePropertyValueValid = function (value) {
         return !isNaN(value) && (value >= 0.0);
     };
-
     DefinitionBase.IsUserMinSizePropertyValueValid = function (value) {
         return !isNaN(value) && (value >= 0.0) && (value !== Number.POSITIVE_INFINITY);
     };
-
     DefinitionBase.IsUserSizePropertyValueValid = function (value) {
         return value.value >= 0.0;
     };
-
     DefinitionBase.OnUserMaxSizePropertyChanged = function (data) {
         var definitionBase = data.object;
         if (definitionBase.inParentLogicalTree) {
             definitionBase.parent._invalidateMeasure();
         }
     };
-
     DefinitionBase.OnUserMinSizePropertyChanged = function (data) {
         var definitionBase = data.object;
         if (definitionBase.inParentLogicalTree) {
             definitionBase.parent._invalidateMeasure();
         }
     };
-
     DefinitionBase.OnUserSizePropertyChanged = function (data) {
         var definitionBase = data.object;
         if (definitionBase.inParentLogicalTree) {
@@ -186,27 +162,23 @@ var DefinitionBase = (function (_super) {
             var newValue = data.newValue;
             if (oldValue.gridUnitType !== newValue.gridUnitType) {
                 parent.invalidate();
-            } else {
+            }
+            else {
                 parent._invalidateMeasure();
             }
         }
     };
-
     DefinitionBase.prototype.onBeforeLayout = function (grid) {
         this.minSize = 0.0;
     };
-
     DefinitionBase.prototype.onEnterParentTree = function () {
     };
-
     DefinitionBase.prototype.onExitParentTree = function () {
         this.finalOffset = 0.0;
     };
-
     DefinitionBase.prototype.updateMinSize = function (minSize) {
         this.minSize = Math.max(this.minSize, minSize);
     };
-
     Object.defineProperty(DefinitionBase.prototype, "inParentLogicalTree", {
         get: function () {
             return (this.index !== -1);
@@ -214,7 +186,6 @@ var DefinitionBase = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(DefinitionBase.prototype, "preferredSize", {
         get: function () {
             var preferredSize = this.minSize;
@@ -226,7 +197,6 @@ var DefinitionBase = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(DefinitionBase.prototype, "userMaxSize", {
         get: function () {
             return this.userMaxSizeValueCache;
@@ -234,7 +204,6 @@ var DefinitionBase = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(DefinitionBase.prototype, "userMaxSizeValueCache", {
         get: function () {
             return this._getValue(this._isColumnDefinition ? ColumnDefinition.MaxWidthProperty : RowDefinition.MaxHeightProperty);
@@ -242,7 +211,6 @@ var DefinitionBase = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(DefinitionBase.prototype, "userMinSize", {
         get: function () {
             return this.userMinSizeValueCache;
@@ -250,7 +218,6 @@ var DefinitionBase = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(DefinitionBase.prototype, "userMinSizeValueCache", {
         get: function () {
             return this._getValue(this._isColumnDefinition ? ColumnDefinition.MinWidthProperty : RowDefinition.MinHeightProperty);
@@ -258,7 +225,6 @@ var DefinitionBase = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(DefinitionBase.prototype, "userSize", {
         get: function () {
             return this.userSizeValueCache;
@@ -266,7 +232,6 @@ var DefinitionBase = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(DefinitionBase.prototype, "userSizeValueCache", {
         get: function () {
             return this._getValue(this._isColumnDefinition ? ColumnDefinition.WidthProperty : RowDefinition.HeightProperty);
@@ -277,7 +242,6 @@ var DefinitionBase = (function (_super) {
     return DefinitionBase;
 })(bm.Bindable);
 exports.DefinitionBase = DefinitionBase;
-
 var GridUnitType = (function () {
     function GridUnitType() {
     }
@@ -287,7 +251,6 @@ var GridUnitType = (function () {
     return GridUnitType;
 })();
 exports.GridUnitType = GridUnitType;
-
 var GridLength = (function () {
     function GridLength(value, type) {
         this._value = value;
@@ -296,7 +259,6 @@ var GridLength = (function () {
     GridLength.equals = function (value1, value2) {
         return (value1.gridUnitType === value2.gridUnitType) && (value1.value === value2.value);
     };
-
     Object.defineProperty(GridLength.prototype, "gridUnitType", {
         get: function () {
             return this._unitType;
@@ -304,7 +266,6 @@ var GridLength = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridLength.prototype, "isAbsolute", {
         get: function () {
             return this._unitType === GridUnitType.pixel;
@@ -312,7 +273,6 @@ var GridLength = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridLength.prototype, "isAuto", {
         get: function () {
             return this._unitType === GridUnitType.auto;
@@ -320,7 +280,6 @@ var GridLength = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridLength.prototype, "isStar", {
         get: function () {
             return this._unitType === GridUnitType.star;
@@ -328,7 +287,6 @@ var GridLength = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridLength.prototype, "value", {
         get: function () {
             return this._value;
@@ -340,7 +298,6 @@ var GridLength = (function () {
     return GridLength;
 })();
 exports.GridLength = GridLength;
-
 var ColumnDefinition = (function (_super) {
     __extends(ColumnDefinition, _super);
     function ColumnDefinition() {
@@ -357,7 +314,6 @@ var ColumnDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(ColumnDefinition.prototype, "maxWidth", {
         get: function () {
             return this.userMaxSizeValueCache;
@@ -368,7 +324,6 @@ var ColumnDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(ColumnDefinition.prototype, "minWidth", {
         get: function () {
             return this.userMinSizeValueCache;
@@ -379,18 +334,16 @@ var ColumnDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(ColumnDefinition.prototype, "width", {
         get: function () {
             return this.userSizeValueCache;
         },
         set: function (value) {
-            this._setValue(ColumnDefinition.WidthProperty, value);
+            this._setValue(ColumnDefinition.WidthProperty, convertGridLength(value));
         },
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(ColumnDefinition.prototype, "offset", {
         get: function () {
             var finalOffset = 0.0;
@@ -402,13 +355,12 @@ var ColumnDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    ColumnDefinition.MaxWidthProperty = new observable.Property("MaxWidth", "ColumnDefinition", new observable.PropertyMetadata(1 / 0, 0 /* None */, DefinitionBase.OnUserMaxSizePropertyChanged, DefinitionBase.IsUserMaxSizePropertyValueValid));
-    ColumnDefinition.MinWidthProperty = new observable.Property("MinWidth", "ColumnDefinition", new observable.PropertyMetadata(0, 0 /* None */, DefinitionBase.OnUserMinSizePropertyChanged, DefinitionBase.IsUserMinSizePropertyValueValid));
-    ColumnDefinition.WidthProperty = new observable.Property("Width", "ColumnDefinition", new observable.PropertyMetadata(new GridLength(1, GridUnitType.star), 0 /* None */, DefinitionBase.OnUserSizePropertyChanged, DefinitionBase.IsUserSizePropertyValueValid));
+    ColumnDefinition.MaxWidthProperty = new observable.Property("MaxWidth", "ColumnDefinition", new observable.PropertyMetadata(1 / 0, observable.PropertyMetadataOptions.None, DefinitionBase.OnUserMaxSizePropertyChanged, DefinitionBase.IsUserMaxSizePropertyValueValid));
+    ColumnDefinition.MinWidthProperty = new observable.Property("MinWidth", "ColumnDefinition", new observable.PropertyMetadata(0, observable.PropertyMetadataOptions.None, DefinitionBase.OnUserMinSizePropertyChanged, DefinitionBase.IsUserMinSizePropertyValueValid));
+    ColumnDefinition.WidthProperty = new observable.Property("Width", "ColumnDefinition", new observable.PropertyMetadata(new GridLength(1, GridUnitType.star), observable.PropertyMetadataOptions.None, DefinitionBase.OnUserSizePropertyChanged, DefinitionBase.IsUserSizePropertyValueValid));
     return ColumnDefinition;
 })(DefinitionBase);
 exports.ColumnDefinition = ColumnDefinition;
-
 var RowDefinition = (function (_super) {
     __extends(RowDefinition, _super);
     function RowDefinition() {
@@ -425,7 +377,6 @@ var RowDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(RowDefinition.prototype, "maxHeight", {
         get: function () {
             return this.userMaxSizeValueCache;
@@ -436,7 +387,6 @@ var RowDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(RowDefinition.prototype, "minHeight", {
         get: function () {
             return this.userMinSizeValueCache;
@@ -447,18 +397,16 @@ var RowDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(RowDefinition.prototype, "height", {
         get: function () {
             return this.userSizeValueCache;
         },
         set: function (value) {
-            this._setValue(RowDefinition.HeightProperty, value);
+            this._setValue(RowDefinition.HeightProperty, convertGridLength(value));
         },
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(RowDefinition.prototype, "offset", {
         get: function () {
             var finalOffset = 0.0;
@@ -470,13 +418,12 @@ var RowDefinition = (function (_super) {
         enumerable: true,
         configurable: true
     });
-    RowDefinition.MaxHeightProperty = new observable.Property("MaxHeight", "RowDefinition", new observable.PropertyMetadata(1.0 / 0.0, 0 /* None */, DefinitionBase.OnUserMaxSizePropertyChanged, DefinitionBase.IsUserMaxSizePropertyValueValid));
-    RowDefinition.MinHeightProperty = new observable.Property("MinHeight", "RowDefinition", new observable.PropertyMetadata(0, 0 /* None */, DefinitionBase.OnUserMinSizePropertyChanged, DefinitionBase.IsUserMinSizePropertyValueValid));
-    RowDefinition.HeightProperty = new observable.Property("Height", "RowDefinition", new observable.PropertyMetadata(new GridLength(1, GridUnitType.star), 0 /* None */, DefinitionBase.OnUserSizePropertyChanged, DefinitionBase.IsUserSizePropertyValueValid));
+    RowDefinition.MaxHeightProperty = new observable.Property("MaxHeight", "RowDefinition", new observable.PropertyMetadata(1.0 / 0.0, observable.PropertyMetadataOptions.None, DefinitionBase.OnUserMaxSizePropertyChanged, DefinitionBase.IsUserMaxSizePropertyValueValid));
+    RowDefinition.MinHeightProperty = new observable.Property("MinHeight", "RowDefinition", new observable.PropertyMetadata(0, observable.PropertyMetadataOptions.None, DefinitionBase.OnUserMinSizePropertyChanged, DefinitionBase.IsUserMinSizePropertyValueValid));
+    RowDefinition.HeightProperty = new observable.Property("Height", "RowDefinition", new observable.PropertyMetadata(new GridLength(1, GridUnitType.star), observable.PropertyMetadataOptions.None, DefinitionBase.OnUserSizePropertyChanged, DefinitionBase.IsUserSizePropertyValueValid));
     return RowDefinition;
 })(DefinitionBase);
 exports.RowDefinition = RowDefinition;
-
 var CellCache = (function () {
     function CellCache() {
     }
@@ -510,13 +457,11 @@ var CellCache = (function () {
     });
     return CellCache;
 })();
-
 var ExtendedData = (function () {
     function ExtendedData() {
     }
     return ExtendedData;
 })();
-
 var Flags = (function () {
     function Flags() {
     }
@@ -533,7 +478,6 @@ var Flags = (function () {
     Flags.ValidDefinitionsVStructure = 2;
     return Flags;
 })();
-
 var LayoutTimeSizeType = (function () {
     function LayoutTimeSizeType() {
     }
@@ -543,7 +487,6 @@ var LayoutTimeSizeType = (function () {
     LayoutTimeSizeType.Star = 4;
     return LayoutTimeSizeType;
 })();
-
 var SpanKey = (function () {
     function SpanKey(start, count, u) {
         this._start = start;
@@ -553,7 +496,6 @@ var SpanKey = (function () {
     SpanKey.prototype.equals = function (key) {
         return key._start === this._start && key._count === this._count && key._u === this._u;
     };
-
     Object.defineProperty(SpanKey.prototype, "hashCode", {
         get: function () {
             var num = this._start ^ (this._count << 2);
@@ -565,7 +507,6 @@ var SpanKey = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(SpanKey.prototype, "count", {
         get: function () {
             return this._count;
@@ -573,7 +514,6 @@ var SpanKey = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(SpanKey.prototype, "start", {
         get: function () {
             return this._start;
@@ -581,7 +521,6 @@ var SpanKey = (function () {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(SpanKey.prototype, "u", {
         get: function () {
             return this._u;
@@ -591,82 +530,111 @@ var SpanKey = (function () {
     });
     return SpanKey;
 })();
-
 var SpanKeyEqualityComparer = (function () {
     function SpanKeyEqualityComparer() {
     }
     SpanKeyEqualityComparer.prototype.equals = function (x, y) {
         return x.equals(y);
     };
-
     SpanKeyEqualityComparer.prototype.getHashCode = function (obj) {
         return obj.hashCode;
     };
     return SpanKeyEqualityComparer;
 })();
-
+var knownCollections;
+(function (knownCollections) {
+    knownCollections.columnDefinitions = "columnDefinitions";
+    knownCollections.rowDefinitions = "rowDefinitions";
+})(knownCollections = exports.knownCollections || (exports.knownCollections = {}));
 var GridPanel = (function (_super) {
     __extends(GridPanel, _super);
-    function GridPanel() {
+    function GridPanel(options) {
         _super.call(this);
+        var i;
+        if (options) {
+            if (options.rows) {
+                for (i = 0; i < options.rows.length; i++) {
+                    var sourceRowDefinition = options.rows[i];
+                    var rowDefinition = new RowDefinition();
+                    utils.copyFrom(sourceRowDefinition, rowDefinition);
+                    this.addRowDefinition(rowDefinition);
+                }
+            }
+            if (options.columns) {
+                for (i = 0; i < options.columns.length; i++) {
+                    var sourceColumnDefinition = options.columns[i];
+                    var columnDefinition = new ColumnDefinition();
+                    utils.copyFrom(sourceColumnDefinition, columnDefinition);
+                    this.addColumnDefinition(columnDefinition);
+                }
+            }
+        }
     }
+    GridPanel.prototype._addArrayFromBuilder = function (name, value) {
+        var i;
+        var colDefinition;
+        var rowDefinition;
+        if (name === knownCollections.columnDefinitions) {
+            for (i = 0; i < value.length; i++) {
+                colDefinition = value[i];
+                this.addColumnDefinition(colDefinition);
+            }
+        }
+        else if (name === knownCollections.rowDefinitions) {
+            for (i = 0; i < value.length; i++) {
+                rowDefinition = value[i];
+                this.addRowDefinition(rowDefinition);
+            }
+        }
+    };
     GridPanel.getColumn = function (element) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
-
         return element._getValue(GridPanel.ColumnProperty);
     };
-
     GridPanel.setColumn = function (element, value) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
         element._setValue(GridPanel.ColumnProperty, value);
     };
-
     GridPanel.getColumnSpan = function (element) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
         return element._getValue(GridPanel.ColumnSpanProperty);
     };
-
     GridPanel.setColumnSpan = function (element, value) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
         element._setValue(GridPanel.ColumnSpanProperty, value);
     };
-
     GridPanel.getRow = function (element) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
         return element._getValue(GridPanel.RowProperty);
     };
-
     GridPanel.setRow = function (element, value) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
         element._setValue(GridPanel.RowProperty, value);
     };
-
     GridPanel.getRowSpan = function (element) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
         return element._getValue(GridPanel.RowSpanProperty);
     };
-
     GridPanel.setRowSpan = function (element, value) {
         if (!element) {
             throw new Error("element cannot be null or undefinied.");
         }
         element._setValue(GridPanel.RowSpanProperty, value);
     };
-
     GridPanel.onCellAttachedPropertyChanged = function (data) {
         if (data.object instanceof view.View) {
             var element = data.object;
@@ -679,23 +647,18 @@ var GridPanel = (function (_super) {
             }
         }
     };
-
     GridPanel.areClose = function (d1, d2) {
         return (Math.abs(d1 - d2) < GridPanel.c_epsilon);
     };
-
     GridPanel.isZero = function (d) {
         return (Math.abs(d) < GridPanel.c_epsilon);
     };
-
     GridPanel.isValueGreaterThanZero = function (value) {
         return value > 0;
     };
-
     GridPanel.isValueNotNegative = function (value) {
         return value >= 0;
     };
-
     GridPanel.registerSpan = function (store, start, count, u, value) {
         var key = new SpanKey(start, count, u);
         var currentValue = store.get(key);
@@ -703,7 +666,6 @@ var GridPanel = (function (_super) {
             store.set(key, value);
         }
     };
-
     GridPanel.prototype.getFinalColumnDefinitionWidth = function (columnIndex) {
         var finalOffset = 0.0;
         if (!this._data) {
@@ -718,7 +680,6 @@ var GridPanel = (function (_super) {
         }
         return finalOffset;
     };
-
     GridPanel.prototype.getFinalRowDefinitionHeight = function (rowIndex) {
         var finalOffset = 0.0;
         if (!this._data) {
@@ -733,12 +694,10 @@ var GridPanel = (function (_super) {
         }
         return finalOffset;
     };
-
     GridPanel.prototype.invalidate = function () {
         this.cellsStructureDirty = true;
         this._invalidateMeasure();
     };
-
     Object.defineProperty(GridPanel.prototype, "arrangeOverrideInProgress", {
         get: function () {
             return this.checkFlagsAnd(Flags.ArrangeOverrideInProgress);
@@ -749,7 +708,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "columnDefinitionCollectionDirty", {
         get: function () {
             return !this.checkFlagsAnd(Flags.ValidDefinitionsUStructure);
@@ -760,7 +718,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "measureOverrideInProgress", {
         get: function () {
             return this.checkFlagsAnd(Flags.MeasureOverrideInProgress);
@@ -771,7 +728,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "rowDefinitionCollectionDirty", {
         get: function () {
             return !this.checkFlagsAnd(Flags.ValidDefinitionsVStructure);
@@ -782,18 +738,15 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     GridPanel.prototype._measureOverride = function (constraint) {
-        console.time("GridPanel: measure = ");
-
         var size;
         var extData = this.extData;
-        try  {
+        try {
             this.listenToNotifications = true;
             this.measureOverrideInProgress = true;
             if (!extData) {
                 size = geometry.Size.zero;
-                var children = this.children;
+                var children = this._children;
                 var i;
                 var count = children.length;
                 for (i = 0; i < count; ++i) {
@@ -804,106 +757,81 @@ var GridPanel = (function (_super) {
                         size.height = Math.max(size.height, desiredSize.height);
                     }
                 }
-
                 return size;
             }
-
             var sizeToContentU = constraint.width === Number.POSITIVE_INFINITY;
             var sizeToContentV = constraint.height === Number.POSITIVE_INFINITY;
-
             if (this.rowDefinitionCollectionDirty || this.columnDefinitionCollectionDirty) {
                 if (this._definitionIndices) {
                     this._definitionIndices.length = 0;
                 }
             }
-
             this.validateDefinitionsUStructure();
             this.validateDefinitionsLayout(this.definitionsU, sizeToContentU);
-
             this.validateDefinitionsVStructure();
             this.validateDefinitionsLayout(this.definitionsV, sizeToContentV);
-
             this.cellsStructureDirty = this.cellsStructureDirty || (this.sizeToContentU !== sizeToContentU) || (this.sizeToContentV !== sizeToContentV);
-
             this.sizeToContentU = sizeToContentU;
             this.sizeToContentV = sizeToContentV;
-
             this.validateCells();
-
             this.measureCellsGroup(extData.cellGroup1, constraint, false, false);
-
             var canResolveStarsV = !this.hasGroup3CellsInAutoRows;
             if (canResolveStarsV) {
                 if (this.hasStarCellsV) {
                     this.resolveStar(this.definitionsV, constraint.height);
                 }
-
                 this.measureCellsGroup(extData.cellGroup2, constraint, false, false);
-
                 if (this.hasStarCellsU) {
                     this.resolveStar(this.definitionsU, constraint.width);
                 }
-
                 this.measureCellsGroup(extData.cellGroup3, constraint, false, false);
-            } else {
+            }
+            else {
                 var canResolveStarsU = extData.cellGroup2 > this.privateCells.length;
                 if (canResolveStarsU) {
                     if (this.hasStarCellsU) {
                         this.resolveStar(this.definitionsU, constraint.width);
                     }
-
                     this.measureCellsGroup(extData.cellGroup3, constraint, false, false);
-
                     if (this.hasStarCellsV) {
                         this.resolveStar(this.definitionsV, constraint.height);
                     }
-                } else {
+                }
+                else {
                     var hasDesiredSizeUChanged = false;
                     var cnt = 0;
-
                     var group2MinSizes = this.cacheMinSizes(extData.cellGroup2, false);
                     var group3MinSizes = this.cacheMinSizes(extData.cellGroup3, true);
-
                     this.measureCellsGroup(extData.cellGroup2, constraint, false, true);
-
                     do {
                         if (hasDesiredSizeUChanged) {
                             this.applyCachedMinSizes(group3MinSizes, true);
                         }
-
                         if (this.hasStarCellsU) {
                             this.resolveStar(this.definitionsU, constraint.width);
                         }
-
                         this.measureCellsGroup(extData.cellGroup3, constraint, false, false);
                         this.applyCachedMinSizes(group2MinSizes, false);
-
                         if (this.hasStarCellsV) {
                             this.resolveStar(this.definitionsV, constraint.height);
                         }
-
                         hasDesiredSizeUChanged = this.measureCellsGroup(extData.cellGroup2, constraint, cnt === GridPanel.c_layoutLoopMaxCount, false);
-                    } while(hasDesiredSizeUChanged && (++cnt <= GridPanel.c_layoutLoopMaxCount));
+                    } while (hasDesiredSizeUChanged && (++cnt <= GridPanel.c_layoutLoopMaxCount));
                 }
             }
-
             this.measureCellsGroup(extData.cellGroup4, constraint, false, false);
             size = new geometry.Size(this.calculateDesiredSize(this.definitionsU), this.calculateDesiredSize(this.definitionsV));
-        } finally {
+        }
+        finally {
             this.measureOverrideInProgress = false;
             console.timeEnd("GridPanel: measure = ");
         }
-
         return size;
     };
-
     GridPanel.prototype._arrangeOverride = function (arrangeSize) {
-        console.time("GridPanel: arrange = ");
-
-        try  {
+        try {
             this.arrangeOverrideInProgress = true;
-
-            var children = this.children;
+            var children = this._children;
             var i;
             if (!this._data) {
                 var count = children.length;
@@ -913,10 +841,10 @@ var GridPanel = (function (_super) {
                         element.arrange(new geometry.Rect(0, 0, arrangeSize.width, arrangeSize.height));
                     }
                 }
-            } else {
+            }
+            else {
                 this.setFinalSize(this.definitionsU, arrangeSize.width);
                 this.setFinalSize(this.definitionsV, arrangeSize.height);
-
                 for (i = 0; i < this.privateCells.length; i++) {
                     var view = children[i];
                     if (view) {
@@ -925,65 +853,57 @@ var GridPanel = (function (_super) {
                         var columnSpan = this.privateCells[i].columnSpan;
                         var rowSpan = this.privateCells[i].rowSpan;
                         var finalRect = new geometry.Rect((columnIndex === 0) ? 0.0 : this.definitionsU[columnIndex].finalOffset, (rowIndex === 0) ? 0.0 : this.definitionsV[rowIndex].finalOffset, this.getFinalSizeForRange(this.definitionsU, columnIndex, columnSpan), this.getFinalSizeForRange(this.definitionsV, rowIndex, rowSpan));
-
                         view.arrange(finalRect);
                     }
                 }
             }
-        } finally {
+        }
+        finally {
             this.setValid();
             this.arrangeOverrideInProgress = false;
             console.timeEnd("GridPanel: arrange = ");
         }
     };
-
     GridPanel.prototype.cacheMinSizes = function (cellsHead, isRows) {
         var length = isRows ? this.definitionsV.length : this.definitionsU.length;
         var minSizes = new Array(length);
-
         for (var j = 0; j < minSizes.length; j++) {
             minSizes[j] = -1;
         }
-
         var i = cellsHead;
         do {
             if (isRows) {
                 minSizes[this.privateCells[i].rowIndex] = this.definitionsV[this.privateCells[i].rowIndex].minSize;
-            } else {
+            }
+            else {
                 minSizes[this.privateCells[i].columnIndex] = this.definitionsU[this.privateCells[i].columnIndex].minSize;
             }
-
             i = this.privateCells[i].next;
-        } while(i < this.privateCells.length);
-
+        } while (i < this.privateCells.length);
         return minSizes;
     };
-
     GridPanel.prototype.applyCachedMinSizes = function (minSizes, isRows) {
         for (var i = 0; i < minSizes.length; i++) {
             if (NumberUtils.greaterThanOrClose(minSizes[i], 0)) {
                 if (isRows) {
                     this.definitionsV[i].minSize = minSizes[i];
-                } else {
+                }
+                else {
                     this.definitionsU[i].minSize = minSizes[i];
                 }
             }
         }
     };
-
     GridPanel.prototype.calculateDesiredSize = function (definitions) {
         var desiredSize = 0.0;
         for (var i = 0; i < definitions.length; i++) {
             desiredSize += definitions[i].minSize;
         }
-
         return desiredSize;
     };
-
     GridPanel.prototype.checkFlagsAnd = function (flags) {
         return ((this._flags & flags) === flags);
     };
-
     GridPanel.prototype.ensureMinSizeInDefinitionRange = function (definitions, start, count, requestedSize, percentReferenceSize) {
         if (!GridPanel.isZero(requestedSize)) {
             var tempDefinitions = this.tempDefinitions;
@@ -999,8 +919,7 @@ var GridPanel = (function (_super) {
             var newMinSize;
             var maxSize;
             var minSize;
-
-            for (var i = start; i < end; i++) {
+            for (i = start; i < end; i++) {
                 minSize = definitions[i].minSize;
                 preferredSize = definitions[i].preferredSize;
                 maxSize = Math.max(definitions[i].userMaxSize, minSize);
@@ -1016,23 +935,21 @@ var GridPanel = (function (_super) {
                 }
                 tempDefinitions[i - start] = definitions[i];
             }
-
             if (requestedSize > rangeMinSize) {
                 if (requestedSize <= rangePreferredSize) {
                     containers.ArraySortHelper.sort(tempDefinitions, 0, count, compareSpanPreferredDistributionOrder);
-
                     for (i = 0, sizeToDistribute = requestedSize; i < autoDefinitionsCount; ++i) {
                         sizeToDistribute -= tempDefinitions[i].minSize;
                     }
-
                     for (; i < count; ++i) {
-                        var newMinSize = Math.min(sizeToDistribute / (count - i), tempDefinitions[i].preferredSize);
+                        newMinSize = Math.min(sizeToDistribute / (count - i), tempDefinitions[i].preferredSize);
                         if (newMinSize > tempDefinitions[i].minSize) {
                             tempDefinitions[i].updateMinSize(newMinSize);
                         }
                         sizeToDistribute -= newMinSize;
                     }
-                } else if (requestedSize <= rangeMaxSize) {
+                }
+                else if (requestedSize <= rangeMaxSize) {
                     containers.ArraySortHelper.sort(tempDefinitions, 0, count, compareSpanMaxDistributionOrder);
                     i = 0;
                     sizeToDistribute = requestedSize - rangePreferredSize;
@@ -1042,23 +959,24 @@ var GridPanel = (function (_super) {
                         tempDefinitions[i].updateMinSize(Math.min(newMinSize, tempDefinitions[i].sizeCache));
                         sizeToDistribute -= tempDefinitions[i].minSize - preferredSize;
                     }
-
                     for (; i < count; ++i) {
                         preferredSize = tempDefinitions[i].minSize;
                         newMinSize = preferredSize + (sizeToDistribute / (count - i));
                         tempDefinitions[i].updateMinSize(Math.min(newMinSize, tempDefinitions[i].sizeCache));
                         sizeToDistribute -= (tempDefinitions[i].minSize - preferredSize);
                     }
-                } else {
+                }
+                else {
                     var equalSize = requestedSize / count;
                     if (equalSize < maxMaxSize && !GridPanel.areClose(equalSize, maxMaxSize)) {
                         var totalRemainingSize = (maxMaxSize * count) - rangeMaxSize;
-                        var sizeToDistribute = requestedSize - rangeMaxSize;
+                        sizeToDistribute = requestedSize - rangeMaxSize;
                         for (i = 0; i < count; ++i) {
                             var deltaSize = ((maxMaxSize - tempDefinitions[i].sizeCache) * sizeToDistribute) / totalRemainingSize;
                             tempDefinitions[i].updateMinSize(tempDefinitions[i].sizeCache + deltaSize);
                         }
-                    } else {
+                    }
+                    else {
                         for (i = 0; i < count; i++) {
                             tempDefinitions[i].updateMinSize(equalSize);
                         }
@@ -1067,140 +985,122 @@ var GridPanel = (function (_super) {
             }
         }
     };
-
     GridPanel.prototype.getFinalSizeForRange = function (definitions, start, count) {
         var size = 0.0;
         var i = (start + count) - 1;
-
         do {
             size += definitions[i].sizeCache;
-        } while(--i >= start);
-
+        } while (--i >= start);
         return size;
     };
-
     GridPanel.prototype.getLengthTypeForRange = function (definitions, start, count) {
         var lengthType = LayoutTimeSizeType.None;
         var i = (start + count) - 1;
-
         do {
             lengthType = lengthType | definitions[i].sizeType;
-        } while(--i >= start);
-
+        } while (--i >= start);
         return lengthType;
     };
-
     GridPanel.prototype.getMeasureSizeForRange = function (definitions, start, count) {
         var measureSize = 0.0;
         var i = (start + count) - 1;
-
         do {
             measureSize += (definitions[i].sizeType === LayoutTimeSizeType.Auto) ? definitions[i].minSize : definitions[i].measureSize;
-        } while(--i >= start);
-
+        } while (--i >= start);
         return measureSize;
     };
-
     GridPanel.prototype.measureCell = function (cell, forceInfinityV) {
         var measureWidth;
         var measureHeight;
         if (this.privateCells[cell].IsAutoU && !this.privateCells[cell].isStarU) {
             measureWidth = Number.POSITIVE_INFINITY;
-        } else {
+        }
+        else {
             measureWidth = this.getMeasureSizeForRange(this.definitionsU, this.privateCells[cell].columnIndex, this.privateCells[cell].columnSpan);
         }
-
         if (forceInfinityV) {
             measureHeight = Number.POSITIVE_INFINITY;
-        } else if (this.privateCells[cell].isAutoV && !this.privateCells[cell].isStarV) {
+        }
+        else if (this.privateCells[cell].isAutoV && !this.privateCells[cell].isStarV) {
             measureHeight = Number.POSITIVE_INFINITY;
-        } else {
+        }
+        else {
             measureHeight = this.getMeasureSizeForRange(this.definitionsV, this.privateCells[cell].rowIndex, this.privateCells[cell].rowSpan);
         }
-
-        var child = this.children[cell];
+        var child = this._children[cell];
         if (child) {
             var childConstraint = new geometry.Size(measureWidth, measureHeight);
             return child.measure(childConstraint);
         }
-
         return geometry.Size.empty;
     };
-
     GridPanel.prototype.measureCellsGroup = function (cellsHead, referenceSize, ignoreDesiredSizeU, forceInfinityV) {
         var _this = this;
         var hasDesiredSizeUChanged = false;
-
         if (cellsHead >= this.privateCells.length) {
             return hasDesiredSizeUChanged;
         }
-
-        var children = this.children;
+        var children = this._children;
         var spanStore = null;
         var ignoreDesiredSizeV = forceInfinityV;
         var i = cellsHead;
-
         do {
             var oldWidth = children[i]._layoutInfo.desiredSize.width;
             var desiredSize = this.measureCell(i, forceInfinityV);
             hasDesiredSizeUChanged = hasDesiredSizeUChanged || !NumberUtils.areClose(oldWidth, desiredSize.width);
-
             if (!ignoreDesiredSizeU) {
                 if (this.privateCells[i].columnSpan === 1) {
                     this.definitionsU[this.privateCells[i].columnIndex].updateMinSize(Math.min(desiredSize.width, this.definitionsU[this.privateCells[i].columnIndex].userMaxSize));
-                } else {
+                }
+                else {
                     if (!spanStore) {
                         spanStore = new containers.Dictionary(new SpanKeyEqualityComparer());
                     }
                     GridPanel.registerSpan(spanStore, this.privateCells[i].columnIndex, this.privateCells[i].columnSpan, true, desiredSize.width);
                 }
             }
-
             if (!ignoreDesiredSizeV) {
                 if (this.privateCells[i].rowSpan === 1) {
                     this.definitionsV[this.privateCells[i].rowIndex].updateMinSize(Math.min(desiredSize.height, this.definitionsV[this.privateCells[i].rowIndex].userMaxSize));
-                } else {
+                }
+                else {
                     if (!spanStore) {
                         spanStore = new containers.Dictionary(new SpanKeyEqualityComparer());
                     }
                     GridPanel.registerSpan(spanStore, this.privateCells[i].rowIndex, this.privateCells[i].rowSpan, false, desiredSize.height);
                 }
             }
-
             i = this.privateCells[i].next;
-        } while(i < this.privateCells.length);
-
+        } while (i < this.privateCells.length);
         if (spanStore) {
             spanStore.forEach(function (key, value) {
                 _this.ensureMinSizeInDefinitionRange(key.u ? _this.definitionsU : _this.definitionsV, key.start, key.count, value, key.u ? referenceSize.width : referenceSize.height);
             });
         }
+        return hasDesiredSizeUChanged;
     };
-
     GridPanel.prototype.resolveStar = function (definitions, availableSize) {
         var tempDefinitions = this.tempDefinitions;
         var starDefinitionsCount = 0;
         var takenSize = 0.0;
-
+        var starValue;
         for (var i = 0; i < definitions.length; i++) {
             switch (definitions[i].sizeType) {
                 case LayoutTimeSizeType.Auto:
                     takenSize += definitions[i].minSize;
                     break;
-
                 case LayoutTimeSizeType.Pixel:
                     takenSize += definitions[i].measureSize;
                     break;
-
                 case LayoutTimeSizeType.Star:
-                     {
+                    {
                         tempDefinitions[starDefinitionsCount++] = definitions[i];
-                        var starValue = definitions[i].userSize.value;
-
+                        starValue = definitions[i].userSize.value;
                         if (GridPanel.isZero(starValue)) {
                             definitions[i].measureSize = 0;
                             definitions[i].sizeCache = 0;
-                        } else {
+                        }
+                        else {
                             starValue = Math.min(starValue, GridPanel.c_starClip);
                             definitions[i].measureSize = starValue;
                             var maxSize = Math.max(definitions[i].minSize, definitions[i].userMaxSize);
@@ -1211,233 +1111,203 @@ var GridPanel = (function (_super) {
                     break;
             }
         }
-
         if (starDefinitionsCount > 0) {
             containers.ArraySortHelper.sort(tempDefinitions, 0, starDefinitionsCount, compareStarDistributionOrder);
-
             var allStarWeights = 0.0;
             var index = starDefinitionsCount - 1;
             do {
                 allStarWeights += tempDefinitions[index].measureSize;
                 tempDefinitions[index].sizeCache = allStarWeights;
-            } while(--index >= 0);
-
+            } while (--index >= 0);
             index = 0;
             do {
                 var resolvedSize;
-                var starValue = tempDefinitions[index].measureSize;
+                starValue = tempDefinitions[index].measureSize;
                 if (GridPanel.isZero(starValue)) {
                     resolvedSize = tempDefinitions[index].minSize;
-                } else {
+                }
+                else {
                     var userSize = Math.max(availableSize - takenSize, 0.0) * (starValue / tempDefinitions[index].sizeCache);
                     resolvedSize = Math.min(userSize, tempDefinitions[index].userMaxSize);
                     resolvedSize = Math.max(tempDefinitions[index].minSize, resolvedSize);
                 }
-
                 tempDefinitions[index].measureSize = resolvedSize;
                 takenSize += resolvedSize;
-            } while(++index < starDefinitionsCount);
+            } while (++index < starDefinitionsCount);
         }
     };
-
     GridPanel.prototype.setFinalSize = function (definitions, finalSize) {
         var starDefinitionsCount = 0;
         var nonStarIndex = definitions.length;
         var allPreferredArrangeSize = 0.0;
         var definitionIndices = this.definitionIndices;
-
+        var starValue;
+        var userSize;
         for (var i = 0; i < definitions.length; i++) {
             if (definitions[i].userSize.isStar) {
-                var starValue = definitions[i].userSize.value;
+                starValue = definitions[i].userSize.value;
                 if (GridPanel.isZero(starValue)) {
                     definitions[i].measureSize = 0.0;
                     definitions[i].sizeCache = 0.0;
-                } else {
+                }
+                else {
                     starValue = Math.min(starValue, GridPanel.c_starClip);
                     definitions[i].measureSize = starValue;
                     var maxSize = Math.min(Math.max(definitions[i].minSize, definitions[i].userMaxSize), GridPanel.c_starClip);
                     definitions[i].sizeCache = maxSize / starValue;
                 }
                 definitionIndices[starDefinitionsCount++] = i;
-            } else {
-                var userSize = 0.0;
-
+            }
+            else {
+                userSize = 0.0;
                 switch (definitions[i].userSize.gridUnitType) {
                     case GridUnitType.pixel:
                         userSize = definitions[i].userSize.value;
                         break;
-
                     case GridUnitType.auto:
                         userSize = definitions[i].minSize;
                         break;
                 }
-
                 definitions[i].sizeCache = Math.max(definitions[i].minSize, Math.min(userSize, definitions[i].userMaxSize));
-
                 allPreferredArrangeSize += definitions[i].sizeCache;
                 definitionIndices[--nonStarIndex] = i;
             }
         }
-
         if (starDefinitionsCount > 0) {
             containers.ArraySortHelper.sort(definitionIndices, 0, starDefinitionsCount, getStarDistributionOrderIndexCompareFn(definitions));
-
             var allStarWeights = 0.0;
             var index = starDefinitionsCount - 1;
             do {
                 allStarWeights += definitions[definitionIndices[index]].measureSize;
                 definitions[definitionIndices[index]].sizeCache = allStarWeights;
-            } while(--index >= 0);
-
+            } while (--index >= 0);
             index = 0;
             do {
                 var resolvedSize;
-                var starValue = definitions[definitionIndices[index]].measureSize;
+                starValue = definitions[definitionIndices[index]].measureSize;
                 if (GridPanel.isZero(starValue)) {
                     resolvedSize = definitions[definitionIndices[index]].minSize;
-                } else {
-                    var userSize = Math.max(finalSize - allPreferredArrangeSize, 0.0) * (starValue / definitions[definitionIndices[index]].sizeCache);
+                }
+                else {
+                    userSize = Math.max(finalSize - allPreferredArrangeSize, 0.0) * (starValue / definitions[definitionIndices[index]].sizeCache);
                     resolvedSize = Math.min(userSize, definitions[definitionIndices[index]].userMaxSize);
                     resolvedSize = Math.max(definitions[definitionIndices[index]].minSize, resolvedSize);
                 }
-
                 definitions[definitionIndices[index]].sizeCache = resolvedSize;
                 allPreferredArrangeSize += definitions[definitionIndices[index]].sizeCache;
-            } while(++index < starDefinitionsCount);
+            } while (++index < starDefinitionsCount);
         }
-
         if (allPreferredArrangeSize > finalSize && !GridPanel.areClose(allPreferredArrangeSize, finalSize)) {
             containers.ArraySortHelper.sort(definitionIndices, 0, definitions.length, getDistributionOrderIndexCompareFn(definitions));
-
             var sizeToDistribute = finalSize - allPreferredArrangeSize;
             for (var k = 0; k < definitions.length; k++) {
                 var definitionIndex = definitionIndices[k];
                 var final = definitions[definitionIndex].sizeCache + (sizeToDistribute / (definitions.length - k));
-                var finalOld = final;
                 final = Math.max(final, definitions[definitionIndex].minSize);
                 final = Math.min(final, definitions[definitionIndex].sizeCache);
-
                 sizeToDistribute -= (final - definitions[definitionIndex].sizeCache);
                 definitions[definitionIndex].sizeCache = final;
             }
-
             allPreferredArrangeSize = finalSize - sizeToDistribute;
         }
-
         definitions[0].finalOffset = 0.0;
         for (var j = 0; j < definitions.length; j++) {
             definitions[(j + 1) % definitions.length].finalOffset = definitions[j].finalOffset + definitions[j].sizeCache;
         }
     };
-
     GridPanel.prototype.setFlags = function (value, flags) {
         this._flags = value ? (this._flags | flags) : (this._flags & ~flags);
     };
-
     GridPanel.prototype.setValid = function () {
         var extData = this.extData;
         if (extData && extData.tempDefinitions) {
             extData.tempDefinitions = null;
         }
     };
-
     GridPanel.prototype.validateCells = function () {
         if (this.cellsStructureDirty) {
             this.validateCellsCore();
             this.cellsStructureDirty = false;
         }
     };
-
     GridPanel.prototype.validateCellsCore = function () {
-        var internalChildren = this.children;
+        var internalChildren = this._children;
         var extData = this.extData;
         extData.cellCachesCollection = new Array(internalChildren.length);
         extData.cellGroup1 = Number.MAX_VALUE;
         extData.cellGroup2 = Number.MAX_VALUE;
         extData.cellGroup3 = Number.MAX_VALUE;
         extData.cellGroup4 = Number.MAX_VALUE;
-
         var hasStarCellsU = false;
         var hasStarCellsV = false;
         var hasGroup3CellsInAutoRows = false;
-
         for (var i = this.privateCells.length - 1; i >= 0; i--) {
             var element = internalChildren[i];
             if (element) {
                 var cache = new CellCache();
                 cache.columnIndex = Math.min(GridPanel.getColumn(element), this.definitionsU.length - 1);
                 cache.rowIndex = Math.min(GridPanel.getRow(element), this.definitionsV.length - 1);
-
                 cache.columnSpan = Math.min(GridPanel.getColumnSpan(element), this.definitionsU.length - cache.columnIndex);
                 cache.rowSpan = Math.min(GridPanel.getRowSpan(element), this.definitionsV.length - cache.rowIndex);
-
                 cache.sizeTypeU = this.getLengthTypeForRange(this.definitionsU, cache.columnIndex, cache.columnSpan);
                 cache.sizeTypeV = this.getLengthTypeForRange(this.definitionsV, cache.rowIndex, cache.rowSpan);
-
                 hasStarCellsU = hasStarCellsU || cache.isStarU;
                 hasStarCellsV = hasStarCellsV || cache.isStarV;
                 if (!cache.isStarV) {
                     if (!cache.isStarU) {
                         cache.next = extData.cellGroup1;
                         extData.cellGroup1 = i;
-                    } else {
+                    }
+                    else {
                         cache.next = extData.cellGroup3;
                         extData.cellGroup3 = i;
                         hasGroup3CellsInAutoRows = hasGroup3CellsInAutoRows || cache.isAutoV;
                     }
-                } else {
+                }
+                else {
                     if (cache.IsAutoU && !cache.isStarU) {
                         cache.next = extData.cellGroup2;
                         extData.cellGroup2 = i;
-                    } else {
+                    }
+                    else {
                         cache.next = extData.cellGroup4;
                         extData.cellGroup4 = i;
                     }
                 }
-
                 this.privateCells[i] = cache;
             }
         }
-
         this.hasStarCellsU = hasStarCellsU;
         this.hasStarCellsV = hasStarCellsV;
         this.hasGroup3CellsInAutoRows = hasGroup3CellsInAutoRows;
     };
-
     GridPanel.prototype.validateDefinitionsLayout = function (definitions, treatStarAsAuto) {
         for (var i = 0; i < definitions.length; i++) {
             definitions[i].onBeforeLayout(this);
-
             var userMinSize = definitions[i].userMinSize;
             var userMaxSize = definitions[i].userMaxSize;
             var userSize = 0.0;
-
             switch (definitions[i].userSize.gridUnitType) {
                 case GridUnitType.pixel:
                     definitions[i].sizeType = LayoutTimeSizeType.Pixel;
                     userSize = definitions[i].userSize.value;
                     userMinSize = Math.max(userMinSize, Math.min(userSize, userMaxSize));
                     break;
-
                 case GridUnitType.auto:
                     definitions[i].sizeType = LayoutTimeSizeType.Auto;
                     userSize = Number.POSITIVE_INFINITY;
                     break;
-
                 case GridUnitType.star:
                     definitions[i].sizeType = treatStarAsAuto ? LayoutTimeSizeType.Auto : LayoutTimeSizeType.Star;
                     userSize = Number.POSITIVE_INFINITY;
                     break;
-
                 default:
                     break;
             }
-
             definitions[i].updateMinSize(userMinSize);
             definitions[i].measureSize = Math.max(userMinSize, Math.min(userSize, userMaxSize));
         }
     };
-
     GridPanel.prototype.validateDefinitionsUStructure = function () {
         if (this.columnDefinitionCollectionDirty) {
             var extData = this.extData;
@@ -1445,17 +1315,18 @@ var GridPanel = (function (_super) {
                 if (!extData.definitionsU) {
                     extData.definitionsU = new Array(new ColumnDefinition());
                 }
-            } else {
+            }
+            else {
                 if (extData.columnDefinitions.length === 0) {
                     extData.definitionsU = new Array(new ColumnDefinition());
-                } else {
+                }
+                else {
                     extData.definitionsU = extData.columnDefinitions;
                 }
             }
             this.columnDefinitionCollectionDirty = false;
         }
     };
-
     GridPanel.prototype.validateDefinitionsVStructure = function () {
         if (this.rowDefinitionCollectionDirty) {
             var extData = this.extData;
@@ -1463,17 +1334,18 @@ var GridPanel = (function (_super) {
                 if (!extData.definitionsV) {
                     extData.definitionsV = new Array(new RowDefinition());
                 }
-            } else {
+            }
+            else {
                 if (extData.rowDefinitions.length === 0) {
                     extData.definitionsV = new Array(new RowDefinition());
-                } else {
+                }
+                else {
                     extData.definitionsV = extData.rowDefinitions;
                 }
             }
             this.rowDefinitionCollectionDirty = false;
         }
     };
-
     Object.defineProperty(GridPanel.prototype, "cellsStructureDirty", {
         get: function () {
             return !this.checkFlagsAnd(Flags.ValidCellsStructure);
@@ -1484,7 +1356,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "listenToNotifications", {
         get: function () {
             return this.checkFlagsAnd(Flags.ListenToNotifications);
@@ -1495,13 +1366,13 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "definitionIndices", {
         get: function () {
             var num = Math.max(this.definitionsU.length, this.definitionsV.length);
             if (!this._definitionIndices && num === 0) {
                 this._definitionIndices = new Array();
-            } else if (!this._definitionIndices || this._definitionIndices.length < num) {
+            }
+            else if (!this._definitionIndices || this._definitionIndices.length < num) {
                 this._definitionIndices = new Array();
             }
             return this._definitionIndices;
@@ -1530,7 +1401,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "hasGroup3CellsInAutoRows", {
         get: function () {
             return this.checkFlagsAnd(Flags.HasGroup3CellsInAutoRows);
@@ -1541,7 +1411,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "hasStarCellsU", {
         get: function () {
             return this.checkFlagsAnd(Flags.HasStarCellsU);
@@ -1552,7 +1421,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "hasStarCellsV", {
         get: function () {
             return this.checkFlagsAnd(Flags.HasStarCellsV);
@@ -1563,7 +1431,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "privateCells", {
         get: function () {
             return this.extData.cellCachesCollection;
@@ -1571,7 +1438,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "sizeToContentU", {
         get: function () {
             return this.checkFlagsAnd(Flags.SizeToContentU);
@@ -1582,7 +1448,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "sizeToContentV", {
         get: function () {
             return this.checkFlagsAnd(Flags.SizeToContentV);
@@ -1593,7 +1458,6 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(GridPanel.prototype, "tempDefinitions", {
         get: function () {
             var extData = this.extData;
@@ -1606,41 +1470,36 @@ var GridPanel = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     GridPanel.prototype.addColumnDefinition = function (value) {
         this.privateVerifyWriteAccess();
         this.privateValidateValueForAddition(value);
         this.privateOnModified(true);
-
         if (!this._data) {
             this._data = new ExtendedData();
         }
-
         var columnDefinitions = this._data.columnDefinitions;
         if (!columnDefinitions) {
             this._data.columnDefinitions = columnDefinitions = new Array();
         }
+        var length = columnDefinitions.length;
         columnDefinitions.push(value);
-        this.privateConnectChild(columnDefinitions.length, value);
+        this.privateConnectChild(length, value);
     };
-
     GridPanel.prototype.addRowDefinition = function (value) {
         this.privateVerifyWriteAccess();
         this.privateValidateValueForAddition(value);
         this.privateOnModified(false);
-
         if (!this._data) {
             this._data = new ExtendedData();
         }
-
         var rowDefinitions = this._data.rowDefinitions;
         if (!rowDefinitions) {
             this._data.rowDefinitions = rowDefinitions = new Array();
         }
+        var length = rowDefinitions.length;
         rowDefinitions.push(value);
-        this.privateConnectChild(rowDefinitions.length, value);
+        this.privateConnectChild(length, value);
     };
-
     GridPanel.prototype.removeColumnDefinition = function (value) {
         var result = this.privateValidateValueForRemoval(value);
         if (result) {
@@ -1648,7 +1507,6 @@ var GridPanel = (function (_super) {
         }
         return result;
     };
-
     GridPanel.prototype.removeRowDefinition = function (value) {
         var result = this.privateValidateValueForRemoval(value);
         if (result) {
@@ -1656,21 +1514,18 @@ var GridPanel = (function (_super) {
         }
         return result;
     };
-
     GridPanel.prototype.getColumnDefinitions = function () {
         if (this._data && this._data.columnDefinitions) {
             return this._data.columnDefinitions.slice();
         }
         return new Array();
     };
-
     GridPanel.prototype.getRowDefinitions = function () {
         if (this._data && this._data.rowDefinitions) {
             return this._data.rowDefinitions.slice();
         }
         return new Array();
     };
-
     GridPanel.prototype.privateValidateValueForAddition = function (value) {
         if (!value) {
             throw new Error("value cannot be null or undefinied.");
@@ -1679,52 +1534,47 @@ var GridPanel = (function (_super) {
             throw new Error("Value is used in another GridPanel.");
         }
     };
-
     GridPanel.prototype.privateValidateValueForRemoval = function (value) {
         if (!value) {
             throw new Error("value cannot be null or undefinied.");
         }
         return (value.parent === this);
     };
-
     GridPanel.prototype.privateConnectChild = function (index, value) {
         value.index = index;
         value.parent = this;
         value.onEnterParentTree();
     };
-
     GridPanel.prototype.privateDisconnectChild = function (value) {
         value.onExitParentTree();
         value.index = -1;
         value.parent = null;
     };
-
     GridPanel.prototype.privateRemove = function (value, isColumn) {
         this.privateOnModified(isColumn);
         this.privateDisconnectChild(value);
         var index = value.index;
         if (isColumn) {
             this._data.columnDefinitions.splice(index, 1);
-        } else {
+        }
+        else {
             this._data.rowDefinitions.splice(index, 1);
         }
     };
-
     GridPanel.prototype.privateOnModified = function (isColumn) {
         if (isColumn) {
             this.columnDefinitionCollectionDirty = true;
-        } else {
+        }
+        else {
             this.rowDefinitionCollectionDirty = true;
         }
         this.invalidate();
     };
-
     GridPanel.prototype.privateVerifyWriteAccess = function () {
         if (this.isReadOnly) {
             throw new Error("Cannot modify RowDefinitions/ColumnDefinitions while in layout.");
         }
     };
-
     Object.defineProperty(GridPanel.prototype, "isReadOnly", {
         get: function () {
             if (!this.measureOverrideInProgress) {
@@ -1738,12 +1588,29 @@ var GridPanel = (function (_super) {
     GridPanel.c_epsilon = 1E-05;
     GridPanel.c_starClip = 1E+298;
     GridPanel.c_layoutLoopMaxCount = 5;
-
-    GridPanel.ColumnProperty = new observable.Property("Column", "GridPanel", new observable.PropertyMetadata(0, 0 /* None */, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueNotNegative));
-    GridPanel.ColumnSpanProperty = new observable.Property("ColumnSpan", "GridPanel", new observable.PropertyMetadata(1, 0 /* None */, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueGreaterThanZero));
-
-    GridPanel.RowProperty = new observable.Property("Row", "GridPanel", new observable.PropertyMetadata(0, 0 /* None */, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueNotNegative));
-    GridPanel.RowSpanProperty = new observable.Property("RowSpan", "GridPanel", new observable.PropertyMetadata(1, 0 /* None */, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueGreaterThanZero));
+    GridPanel.ColumnProperty = new observable.Property("Column", "GridPanel", new observable.PropertyMetadata(0, observable.PropertyMetadataOptions.None, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueNotNegative));
+    GridPanel.ColumnSpanProperty = new observable.Property("ColumnSpan", "GridPanel", new observable.PropertyMetadata(1, observable.PropertyMetadataOptions.None, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueGreaterThanZero));
+    GridPanel.RowProperty = new observable.Property("Row", "GridPanel", new observable.PropertyMetadata(0, observable.PropertyMetadataOptions.None, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueNotNegative));
+    GridPanel.RowSpanProperty = new observable.Property("RowSpan", "GridPanel", new observable.PropertyMetadata(1, observable.PropertyMetadataOptions.None, GridPanel.onCellAttachedPropertyChanged, GridPanel.isValueGreaterThanZero));
     return GridPanel;
 })(panel.Panel);
 exports.GridPanel = GridPanel;
+function convertGridLength(value) {
+    if (types.isString(value)) {
+        if (value === "auto") {
+            return definition.GridLength.auto;
+        }
+        else if (value.indexOf("*") !== -1) {
+            return new definition.GridLength(parseInt(value.replace("*", "") || 1), definition.GridUnitType.star);
+        }
+        else if (!isNaN(parseInt(value))) {
+            return new definition.GridLength(parseInt(value), definition.GridUnitType.pixel);
+        }
+    }
+    else if (value instanceof definition.GridLength) {
+        return value;
+    }
+    else {
+        return new definition.GridLength(1, definition.GridUnitType.star);
+    }
+}

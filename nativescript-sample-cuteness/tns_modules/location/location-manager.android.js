@@ -1,13 +1,11 @@
-﻿var types = require("location/location-types");
+var types = require("location/location-types");
 var appModule = require("application");
-
 var LocationManager = (function () {
     function LocationManager() {
         this.desiredAccuracy = 300 /* ANY */;
         this.updateDistance = 0;
         this.minimumUpdateTime = 200;
         this.isStarted = false;
-
         this.androidLocationManager = appModule.android.context.getSystemService(android.content.Context.LOCATION_SERVICE);
     }
     LocationManager.locationFromAndroidLocation = function (androidLocation) {
@@ -21,10 +19,8 @@ var LocationManager = (function () {
         location.direction = androidLocation.getBearing();
         location.timestamp = new Date(androidLocation.getTime());
         location.android = androidLocation;
-
         return location;
     };
-
     LocationManager.androidLocationFromLocation = function (location) {
         var androidLocation = new android.location.Location('custom');
         androidLocation.setLatitude(location.latitude);
@@ -39,22 +35,21 @@ var LocationManager = (function () {
             androidLocation.setBearing(float(location.direction));
         }
         if (location.timestamp) {
-            try  {
+            try {
                 androidLocation.setTime(long(location.timestamp.getTime()));
-            } catch (e) {
+            }
+            catch (e) {
                 console.error('invalid location timestamp');
             }
         }
         return androidLocation;
     };
-
     LocationManager.isEnabled = function () {
         var criteria = new android.location.Criteria();
         criteria.setAccuracy(android.location.Criteria.ACCURACY_COARSE);
         var lm = appModule.android.context.getSystemService(android.content.Context.LOCATION_SERVICE);
         return (lm.getBestProvider(criteria, true) != null) ? true : false;
     };
-
     LocationManager.distance = function (loc1, loc2) {
         if (!loc1.android) {
             loc1.android = LocationManager.androidLocationFromLocation(loc1);
@@ -64,7 +59,6 @@ var LocationManager = (function () {
         }
         return loc1.android.distanceTo(loc2.android);
     };
-
     LocationManager.prototype.startLocationMonitoring = function (onLocation, onError, options) {
         if (!this.isStarted) {
             var criteria = new android.location.Criteria();
@@ -77,7 +71,8 @@ var LocationManager = (function () {
                             if (location.timestamp.valueOf() + this.maximumAge > new Date().valueOf()) {
                                 this._onLocation(location);
                             }
-                        } else {
+                        }
+                        else {
                             this._onLocation(location);
                         }
                     }
@@ -89,7 +84,6 @@ var LocationManager = (function () {
                 onStatusChanged: function (arg1, arg2, arg3) {
                 }
             });
-
             if (options) {
                 if (options.desiredAccuracy) {
                     this.desiredAccuracy = options.desiredAccuracy;
@@ -101,49 +95,47 @@ var LocationManager = (function () {
                     this.minimumUpdateTime = options.minimumUpdateTime;
                 }
             }
-
             this.locationListener._onLocation = onLocation;
             this.locationListener._onError = onError;
             this.locationListener.maximumAge = (options && ("number" === typeof options.maximumAge)) ? options.maximumAge : undefined;
-            try  {
+            try {
                 this.androidLocationManager.requestLocationUpdates(long(this.minimumUpdateTime), float(this.updateDistance), criteria, this.locationListener, null);
                 this.isStarted = true;
-            } catch (e) {
+            }
+            catch (e) {
                 if (onError) {
                     onError(e);
                 }
             }
-        } else if (onError) {
+        }
+        else if (onError) {
             onError(new Error('location monitoring already started'));
         }
     };
-
     LocationManager.prototype.stopLocationMonitoring = function () {
         if (this.isStarted) {
             this.androidLocationManager.removeUpdates(this.locationListener);
             this.isStarted = false;
         }
     };
-
     Object.defineProperty(LocationManager.prototype, "lastKnownLocation", {
         get: function () {
             var criteria = new android.location.Criteria();
             criteria.setAccuracy((this.desiredAccuracy === 3 /* HIGH */) ? android.location.Criteria.ACCURACY_FINE : android.location.Criteria.ACCURACY_COARSE);
-            try  {
+            try {
                 var providers = this.androidLocationManager.getProviders(criteria, false);
                 var it = providers.iterator();
                 while (it.hasNext()) {
                     var element = it.next();
-
                     var location = this.androidLocationManager.getLastKnownLocation(element);
                     if (location) {
                         return LocationManager.locationFromAndroidLocation(location);
                     }
                 }
-            } catch (e) {
+            }
+            catch (e) {
                 console.error(e.message);
             }
-
             return null;
         },
         enumerable: true,

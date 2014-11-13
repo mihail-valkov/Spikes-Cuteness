@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Page navigatedTo="pageNavigatedTo">
+  <GridPanel cssClass="gridpanel">
+    <GridPanel.rowDefinitions>
+      <RowDefinition height="auto" />
+      <RowDefinition height="*" />
+      <RowDefinition height="auto" />
+    </GridPanel.rowDefinitions>
+    <Image id="image" stretch="aspectFill"/>
+    <Label id="titleLabel" cssClass="detailsTitle" textWrap="true" margin="10" row="1" />
+    <StackPanel orientation="horizontal" row="2">
+      <Label cssClass="detailsStaticText" text="by" margin="2" />
+      <Label id="authorLabel" cssClass="detailsAuthor" margin="2" />
+      <Label cssClass="detailsStaticText" text="|" margin="2" />
+      <Label id="commentsLabel" cssClass="detailsAuthor" margin="2" />
+    </StackPanel>
+    <ActivityIndicator id="indicator" width="50" height="50" />
+  </GridPanel>
+</Page>
