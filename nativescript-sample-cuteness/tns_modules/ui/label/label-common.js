@@ -1,22 +1,18 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
 var view = require("ui/core/view");
-
 var dependencyObservable = require("ui/core/dependency-observable");
 var proxy = require("ui/core/proxy");
-
-exports.textProperty = new dependencyObservable.Property("text", "Label", new proxy.PropertyMetadata("", 1 /* AffectsMeasure */));
-
-exports.textWrapProperty = new dependencyObservable.Property("textWrap", "Label", new proxy.PropertyMetadata(false, 1 /* AffectsMeasure */));
-
+exports.textProperty = new dependencyObservable.Property("text", "Label", new proxy.PropertyMetadata("", dependencyObservable.PropertyMetadataOptions.AffectsMeasure));
+exports.textWrapProperty = new dependencyObservable.Property("textWrap", "Label", new proxy.PropertyMetadata(false, dependencyObservable.PropertyMetadataOptions.AffectsMeasure));
 var Label = (function (_super) {
     __extends(Label, _super);
-    function Label() {
-        _super.apply(this, arguments);
+    function Label(options) {
+        _super.call(this, options);
     }
     Object.defineProperty(Label.prototype, "text", {
         get: function () {
@@ -28,7 +24,6 @@ var Label = (function (_super) {
         enumerable: true,
         configurable: true
     });
-
     Object.defineProperty(Label.prototype, "textWrap", {
         get: function () {
             return this._getValue(exports.textWrapProperty);

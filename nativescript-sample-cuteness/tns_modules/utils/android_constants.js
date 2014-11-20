@@ -1,5 +1,4 @@
-﻿exports.btn_default = 0x01080004;
-
+exports.btn_default = 0x01080004;
 exports.state_first = 0x010100a4;
 exports.state_enabled = 0x0101009e;
 exports.state_pressed = 0x010100a7;

@@ -1,4 +1,4 @@
-﻿exports.AliceBlue = "#F0F8FF";
+exports.AliceBlue = "#F0F8FF";
 exports.AntiqueWhite = "#FAEBD7";
 exports.Aqua = "#00FFFF";
 exports.Aquamarine = "#7FFFD4";
@@ -138,9 +138,7 @@ exports.White = "#FFFFFF";
 exports.WhiteSmoke = "#F5F5F5";
 exports.Yellow = "#FFFF00";
 exports.YellowGreen = "#9ACD32";
-
 var _allColors = {};
-
 (function () {
     var name;
     var underscore = "_";
@@ -151,21 +149,17 @@ var _allColors = {};
         }
     }
 })();
-
 function isKnownName(name) {
     if (!name) {
         return undefined;
     }
-
     return name.toLowerCase() in _allColors;
 }
 exports.isKnownName = isKnownName;
-
 function getKnownColor(name) {
     if (!name) {
         return undefined;
     }
-
     return _allColors[name.toLowerCase()];
 }
 exports.getKnownColor = getKnownColor;

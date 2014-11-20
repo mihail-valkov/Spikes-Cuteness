@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Page loaded="pageLoaded">
+  <TabView>
+    <TabView.items>
+      <TabEntry title="List">
+        <TabEntry.view>
+            <ListView id="feedListView" itemLoading="listViewItemLoading" itemTap="listViewItemTap" loadMoreItems="listViewLoadMoreItems" />
+        </TabEntry.view>
+      </TabEntry>
+      <TabEntry title="About">
+        <TabEntry.view>
+          <StackPanel>
+            <Image margin="10" id="aboutImage" />
+            <Label margin="10" textWrap="true" text="Cuteness is a proof of concept app demonstrating the Telerik's NativeScript for writing native mobile applications using JavaScript." />
+          </StackPanel>
+        </TabEntry.view>
+      </TabEntry>
+    </TabView.items>
+  </TabView>
+</Page>

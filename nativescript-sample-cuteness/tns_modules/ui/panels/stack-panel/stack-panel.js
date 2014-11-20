@@ -1,51 +1,50 @@
-﻿var __extends = this.__extends || function (d, b) {
+var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     __.prototype = b.prototype;
     d.prototype = new __();
 };
-var panel = require("ui/core/panel");
-
+var panel = require("ui/panels/panel");
 var geometry = require("utils/geometry");
-
-(function (Orientation) {
-    Orientation[Orientation["Horizontal"] = 0] = "Horizontal";
-    Orientation[Orientation["Vertical"] = 1] = "Vertical";
-})(exports.Orientation || (exports.Orientation = {}));
-var Orientation = exports.Orientation;
-
+var proxy = require("ui/core/proxy");
+var dependencyObservable = require("ui/core/dependency-observable");
+var orientation;
+(function (orientation) {
+    orientation.horizontal = "horizontal";
+    orientation.vertical = "vertical";
+})(orientation = exports.orientation || (exports.orientation = {}));
+function isValidOrientation(value) {
+    return value === orientation.vertical || value === orientation.horizontal;
+}
+exports.orientationProperty = new dependencyObservable.Property("orientation", "StackPanel", new proxy.PropertyMetadata(orientation.vertical, dependencyObservable.PropertyMetadataOptions.AffectsMeasure, undefined, isValidOrientation));
 var StackPanel = (function (_super) {
     __extends(StackPanel, _super);
     function StackPanel() {
         _super.apply(this, arguments);
-        this._orientation = 1 /* Vertical */;
     }
     Object.defineProperty(StackPanel.prototype, "orientation", {
         get: function () {
-            return this._orientation;
+            return this._getValue(exports.orientationProperty);
         },
         set: function (value) {
-            if (this._orientation !== value) {
-                this._orientation = value;
-                this._invalidateMeasure();
-            }
+            this._setValue(exports.orientationProperty, value);
         },
         enumerable: true,
         configurable: true
     });
-
     StackPanel.prototype._measureOverride = function (availableSize) {
-        var isHorizontal = this._orientation === 0 /* Horizontal */;
+        var isHorizontal = this.orientation === orientation.horizontal;
         var desiredSize = new geometry.Size(0, 0);
         var measureSize = isHorizontal ? new geometry.Size(Number.POSITIVE_INFINITY, availableSize.height) : new geometry.Size(availableSize.width, Number.POSITIVE_INFINITY);
-        for (var i = 0; i < this.children.length; i++) {
-            var child = this.children[i];
+        for (var i = 0; i < this._children.length; i++) {
+            var child = this._children[i];
             if (child && child.isVisible) {
                 var childDesiredSize = child.measure(measureSize);
                 if (isHorizontal) {
                     desiredSize.width += childDesiredSize.width;
                     desiredSize.height = Math.max(desiredSize.height, childDesiredSize.height);
-                } else {
+                }
+                else {
                     desiredSize.height += childDesiredSize.height;
                     desiredSize.width = Math.max(desiredSize.width, childDesiredSize.width);
                 }
@@ -53,13 +52,11 @@ var StackPanel = (function (_super) {
         }
         return desiredSize;
     };
-
     StackPanel.prototype._arrangeOverride = function (finalSize) {
-        var isHorizontal = this._orientation === 0 /* Horizontal */;
+        var isHorizontal = this.orientation === orientation.horizontal;
         var arrangeRect = new geometry.Rect(0, 0, 0, 0);
-
-        for (var i = 0; i < this.children.length; i++) {
-            var child = this.children[i];
+        for (var i = 0; i < this._children.length; i++) {
+            var child = this._children[i];
             if (child && child.isVisible) {
                 var childDesiredSize = child._layoutInfo.desiredSize;
                 if (isHorizontal) {
@@ -67,7 +64,8 @@ var StackPanel = (function (_super) {
                     arrangeRect.height = Math.max(finalSize.height, childDesiredSize.height);
                     child.arrange(arrangeRect);
                     arrangeRect.x += arrangeRect.width;
-                } else {
+                }
+                else {
                     arrangeRect.height = childDesiredSize.height;
                     arrangeRect.width = Math.max(finalSize.width, childDesiredSize.width);
                     child.arrange(arrangeRect);
