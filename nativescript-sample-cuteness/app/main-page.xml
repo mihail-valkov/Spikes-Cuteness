@@ -2,7 +2,7 @@
 <Page loaded="pageLoaded">
   <TabView>
     <TabView.items>
-      <TabEntry title="List">
+      <TabEntry title="Кютнес"> 
         <TabEntry.view>
             <ListView id="feedListView" itemLoading="listViewItemLoading" itemTap="listViewItemTap" loadMoreItems="listViewLoadMoreItems" />
         </TabEntry.view>
